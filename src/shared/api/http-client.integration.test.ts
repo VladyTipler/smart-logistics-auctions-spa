@@ -135,6 +135,66 @@ describe("typed HTTP client", () => {
     });
   });
 
+  it("preserves status and raw payload when an error JSON body is malformed", async () => {
+    const malformedPayload = "{malformed";
+
+    server.use(
+      http.get(
+        `${API_ORIGIN}/api/v1/auctions/malformed-error`,
+        () =>
+          new HttpResponse(malformedPayload, {
+            status: 503,
+            headers: { "Content-Type": "application/problem+json" },
+          }),
+      ),
+    );
+
+    await expect(
+      client.get("/auctions/malformed-error"),
+    ).rejects.toMatchObject({
+      status: 503,
+      payload: malformedPayload,
+      problem: undefined,
+      message: "API request failed with status 503",
+    });
+  });
+
+  it("parses case-insensitive vendor JSON media types with parameters", async () => {
+    const responseBody = { id: "auction-id" };
+
+    server.use(
+      http.get(
+        `${API_ORIGIN}/api/v1/auctions/vendor-json`,
+        () =>
+          new HttpResponse(JSON.stringify(responseBody), {
+            headers: {
+              "Content-Type": "Application/Vnd.Smart-Logistics+JSON; Charset=UTF-8",
+            },
+          }),
+      ),
+    );
+
+    await expect(client.get("/auctions/vendor-json")).resolves.toEqual(
+      responseBody,
+    );
+  });
+
+  it("does not hide malformed JSON in a successful response", async () => {
+    server.use(
+      http.get(
+        `${API_ORIGIN}/api/v1/auctions/malformed-success`,
+        () =>
+          new HttpResponse("{malformed", {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    );
+
+    await expect(
+      client.get("/auctions/malformed-success"),
+    ).rejects.toBeInstanceOf(SyntaxError);
+  });
+
   it("returns undefined for an empty successful response", async () => {
     server.use(
       http.post(

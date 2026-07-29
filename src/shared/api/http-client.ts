@@ -18,6 +18,15 @@ function joinUrl(baseUrl: string, path: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 }
 
+function isJsonMediaType(contentType: string): boolean {
+  const mediaType = contentType.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+
+  return (
+    mediaType === "application/json" ||
+    /^[^/\s]+\/[^/\s]+\+json$/.test(mediaType)
+  );
+}
+
 async function parseResponseBody(response: Response): Promise<unknown> {
   if (response.status === 204) {
     return undefined;
@@ -29,13 +38,16 @@ async function parseResponseBody(response: Response): Promise<unknown> {
     return undefined;
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
+  if (isJsonMediaType(response.headers.get("content-type") ?? "")) {
+    try {
+      return JSON.parse(body) as unknown;
+    } catch (error) {
+      if (response.ok) {
+        throw error;
+      }
 
-  if (
-    contentType.includes("application/json") ||
-    contentType.includes("application/problem+json")
-  ) {
-    return JSON.parse(body) as unknown;
+      return body;
+    }
   }
 
   return body;

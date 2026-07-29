@@ -1,15 +1,26 @@
 import { ChevronLeft } from "lucide-react";
-import { Link, useLoaderData, useParams } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link, useParams } from "@tanstack/react-router";
 
+import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.queries";
+import { mapAuctionDetail } from "@/entities/auction/model/map-auction-detail";
 import { AuctionDetail } from "@/widgets/auction-detail/ui/auction-detail.component";
 import { AuctionTradingPanel } from "@/widgets/auction-trading-panel/ui/auction-trading-panel.component";
 
 export function AuctionDetailPage() {
   const { auctionUuid } = useParams({ from: "/auctions/$auctionUuid" });
-  const auction = useLoaderData({ from: "/auctions/$auctionUuid" });
+  const { data } = useSuspenseQuery(auctionDetailQueryOptions(auctionUuid));
+  const auction = mapAuctionDetail(data);
 
   return (
-    <article className="auction-detail" aria-labelledby="auction-detail-title">
+    <article
+      className={`auction-detail${
+        auction.access.canSetBet
+          ? " auction-detail--with-mobile-action"
+          : ""
+      }`}
+      aria-labelledby="auction-detail-title"
+    >
       <header className="auction-detail__header">
         <Link className="auction-detail__back" to="/auctions">
           <ChevronLeft size={16} aria-hidden="true" />

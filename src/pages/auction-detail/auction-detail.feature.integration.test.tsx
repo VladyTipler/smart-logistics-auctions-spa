@@ -1,5 +1,9 @@
 import { HttpResponse, delay, http } from "msw";
-import { screen, waitForElementToBeRemoved } from "@testing-library/react";
+import {
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
 import {
   afterAll,
   afterEach,
@@ -45,7 +49,9 @@ describe("auction detail feature", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Кишинёв")).toBeInTheDocument();
     expect(screen.getByText("Бухарест")).toBeInTheDocument();
-    expect(screen.getByText("32 000 ₽")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "32 000 ₽" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Сделать ставку" }),
     ).toHaveAttribute(
@@ -57,6 +63,40 @@ describe("auction detail feature", () => {
     );
     expect(router.options.context.queryClient).toBe(queryClient);
     expect(detailRequests).toBe(1);
+
+    const cacheUpdate = structuredClone(auctionFixtures[0].detail);
+    cacheUpdate.trading.price!.current = 24_590.16;
+    queryClient.setQueryData(
+      auctionKeys.detail(auctionUuid),
+      cacheUpdate,
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 2,
+        name: "24 590,16 ₽",
+      }),
+    ).toBeInTheDocument();
+    expect(detailRequests).toBe(1);
+
+    const refetched = structuredClone(cacheUpdate);
+    refetched.trading.price!.current = 24_000;
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid", () => {
+        detailRequests += 1;
+        return HttpResponse.json(refetched);
+      }),
+    );
+    await queryClient.invalidateQueries({
+      queryKey: auctionKeys.detail(auctionUuid),
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { level: 2, name: "24 000 ₽" }),
+      ).toBeInTheDocument();
+    });
+    expect(detailRequests).toBe(2);
   });
 
   it("renders the auction not-found state for an unknown direct link", async () => {
@@ -93,7 +133,9 @@ describe("auction detail feature", () => {
     expect(screen.queryByText("Иван")).not.toBeInTheDocument();
     expect(screen.queryByText("Скрытый организатор")).not.toBeInTheDocument();
     expect(screen.queryByText("150 000 ₽")).not.toBeInTheDocument();
-    expect(screen.getByText("32 000 ₽")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "32 000 ₽" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Сделать ставку" }),
     ).not.toBeInTheDocument();

@@ -1,6 +1,6 @@
 import type { AuctionDetailViewModel } from "@/entities/auction/model/auction-detail.vm";
 
-import { formatAuctionMoney } from "@/widgets/auction-trading-panel/model/auction-money";
+import { formatMoney } from "@/shared/lib/format-money";
 
 type AuctionCargoSectionProps = {
   cargo: AuctionDetailViewModel["cargo"];
@@ -20,7 +20,39 @@ export function AuctionCargoSection({ cargo }: AuctionCargoSectionProps) {
     cargo.value
       ? [
           "Стоимость груза",
-          formatAuctionMoney(cargo.value.amount, cargo.value.currencyCode),
+          formatMoney(cargo.value.amount, cargo.value.currencyCode),
+        ]
+      : undefined,
+    cargo.isInternational ? ["Перевозка", "Международная"] : undefined,
+    cargo.temperatureLabel
+      ? ["Температура", cargo.temperatureLabel]
+      : undefined,
+    cargo.adrClass !== undefined
+      ? ["ADR", `Класс ${cargo.adrClass}`]
+      : undefined,
+    cargo.equipmentLabels.length
+      ? ["Оснащение", cargo.equipmentLabels.join(", ")]
+      : undefined,
+    cargo.vehicle?.type ? ["Тип ТС", cargo.vehicle.type] : undefined,
+    cargo.vehicle?.weightTons !== undefined
+      ? ["Грузоподъёмность ТС", `${cargo.vehicle.weightTons} т`]
+      : undefined,
+    cargo.vehicle?.volumeCubicMeters !== undefined
+      ? ["Объём ТС", `${cargo.vehicle.volumeCubicMeters} м³`]
+      : undefined,
+    cargo.vehicle &&
+    [
+      cargo.vehicle.lengthMeters,
+      cargo.vehicle.widthMeters,
+      cargo.vehicle.heightMeters,
+    ].some((value) => value !== undefined)
+      ? [
+          "Габариты ТС",
+          [
+            cargo.vehicle.lengthMeters ?? "—",
+            cargo.vehicle.widthMeters ?? "—",
+            cargo.vehicle.heightMeters ?? "—",
+          ].join(" × ") + " м",
         ]
       : undefined,
   ].filter((fact): fact is string[] => fact !== undefined);

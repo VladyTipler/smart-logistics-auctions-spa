@@ -7,7 +7,6 @@ import {
   AuctionDetailPendingPage,
 } from "@/pages/auction-detail/auction-detail-page.component";
 import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.queries";
-import { mapAuctionDetail } from "@/entities/auction/model/map-auction-detail";
 import { ApiError } from "@/shared/api/api-error";
 
 export const auctionDetailRoute = createRoute({
@@ -15,10 +14,8 @@ export const auctionDetailRoute = createRoute({
   path: "/auctions/$auctionUuid",
   loader: async ({ context: { queryClient }, params: { auctionUuid } }) => {
     try {
-      return mapAuctionDetail(
-        await queryClient.ensureQueryData(
-          auctionDetailQueryOptions(auctionUuid),
-        ),
+      return await queryClient.ensureQueryData(
+        auctionDetailQueryOptions(auctionUuid),
       );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {

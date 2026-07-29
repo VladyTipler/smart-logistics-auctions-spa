@@ -15,20 +15,33 @@ type AppProvidersProps = {
 };
 
 export function AppProviders({
-  queryClient = appQueryClient,
+  queryClient,
   router,
 }: AppProvidersProps) {
+  const routerQueryClient = router?.options.context.queryClient;
+  if (
+    queryClient &&
+    routerQueryClient &&
+    queryClient !== routerQueryClient
+  ) {
+    throw new Error(
+      "Router and QueryClientProvider must share one QueryClient",
+    );
+  }
+
+  const providerClient =
+    queryClient ?? routerQueryClient ?? appQueryClient;
   const resolvedRouter = useMemo(
     () =>
       router ??
-      (queryClient === appQueryClient
+      (providerClient === appQueryClient
         ? appRouter
-        : createAppRouter({ queryClient })),
-    [queryClient, router],
+        : createAppRouter({ queryClient: providerClient })),
+    [providerClient, router],
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={providerClient}>
       <RouterProvider router={resolvedRouter} />
     </QueryClientProvider>
   );

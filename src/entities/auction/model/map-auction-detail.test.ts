@@ -98,4 +98,120 @@ describe("mapAuctionDetail", () => {
       "5 рабочих дней",
     );
   });
+
+  it("maps every documented cargo capability without raw contract keys", () => {
+    const detail = cloneFixture();
+    detail.cargo = {
+      ...detail.cargo,
+      is_international: true,
+      temp_from: -18,
+      temp_to: -15,
+      conics: 4,
+      belts: 6,
+      adr: 3,
+      coupling: true,
+      air_pass: true,
+      low_loader: true,
+      additional_load: true,
+      containered: true,
+      container_type: "40HC",
+      container_size: "40 футов",
+      loading_types: { side: true, top: true, rear: true, full: true },
+      docs: { tir: true, cmr: true, t1: true, med: true },
+      car: {
+        type: "Тягач",
+        weight: 20,
+        volume: 82,
+        width: 2.4,
+        length: 13.6,
+        height: 2.7,
+      },
+    };
+    detail.routes[0].cargo = {
+      name: "Мороженое",
+      package_name: "Европаллет",
+      package_amount: 18,
+      weight: "20.000",
+      volume: "82.000",
+      length: "13.600",
+      width: "2.400",
+      height: "2.700",
+      oversized: true,
+    };
+
+    const viewModel = mapAuctionDetail(detail);
+
+    expect(viewModel.cargo.loadingLabels).toEqual([
+      "Боковая",
+      "Верхняя",
+      "Задняя",
+      "Полная растентовка",
+    ]);
+    expect(viewModel.cargo.documentLabels).toEqual([
+      "TIR",
+      "CMR",
+      "T1",
+      "Медицинские документы",
+    ]);
+    expect(viewModel.cargo).toMatchObject({
+      isInternational: true,
+      temperatureLabel: "−18…−15 °C",
+      adrClass: 3,
+      vehicle: {
+        type: "Тягач",
+        weightTons: 20,
+        volumeCubicMeters: 82,
+        widthMeters: 2.4,
+        lengthMeters: 13.6,
+        heightMeters: 2.7,
+      },
+    });
+    expect(viewModel.cargo.equipmentLabels).toEqual([
+      "Коники: 4",
+      "Ремни: 6",
+      "Сцепка",
+      "Пневмоход",
+      "Низкорамная платформа",
+      "Догруз",
+      "Контейнер: 40HC · 40 футов",
+    ]);
+    expect(viewModel.route[0].cargo).toMatchObject({
+      packageName: "Европаллет",
+      packageAmount: 18,
+      dimensionsLabel: "13,6 × 2,4 × 2,7 м",
+      oversized: true,
+    });
+    expect(viewModel.cargo).not.toHaveProperty("loading_types");
+    expect(viewModel.cargo.vehicle).not.toHaveProperty("weight");
+  });
+
+  it("ignores unknown cargo flags and non-finite optional requirements", () => {
+    const detail = cloneFixture();
+    detail.cargo.loading_types = {
+      rear: true,
+      teleport: true,
+    } as NonNullable<AuctionDetail["cargo"]["loading_types"]> & {
+      teleport: boolean;
+    };
+    detail.cargo.docs = {
+      med: true,
+      secret: true,
+    } as NonNullable<AuctionDetail["cargo"]["docs"]> & { secret: boolean };
+    detail.cargo.car = { weight: Number.NaN };
+
+    const viewModel = mapAuctionDetail(detail);
+
+    expect(viewModel.cargo.loadingLabels).toEqual(["Задняя"]);
+    expect(viewModel.cargo.documentLabels).toEqual([
+      "Медицинские документы",
+    ]);
+    expect(viewModel.cargo.vehicle).toBeUndefined();
+  });
+
+  it("keeps the trading min and max bounds in the sanitised model", () => {
+    const viewModel = mapAuctionDetail(cloneFixture());
+
+    expect(viewModel.trading.minPrice).toBe(1_000);
+    expect(viewModel.trading.maxPrice).toBe(100_000);
+  });
 });

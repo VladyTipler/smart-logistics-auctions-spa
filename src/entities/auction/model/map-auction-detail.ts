@@ -60,6 +60,61 @@ function formatDateTime(value: string | undefined) {
   }).format(date);
 }
 
+function validDateTime(value: string | undefined) {
+  if (!value || Number.isNaN(new Date(value).getTime())) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function formatDecimal(value: string | number | null | undefined) {
+  const number = typeof value === "string" ? Number(value) : value;
+  if (typeof number !== "number" || !Number.isFinite(number)) {
+    return undefined;
+  }
+
+  return new Intl.NumberFormat("ru-RU", {
+    maximumFractionDigits: 3,
+  })
+    .format(number)
+    .replace(/\s/g, " ");
+}
+
+function formatTemperature(
+  from: number | null | undefined,
+  to: number | null | undefined,
+) {
+  const start = finiteNumber(from);
+  const end = finiteNumber(to);
+  if (start === undefined && end === undefined) {
+    return undefined;
+  }
+
+  const label = (value: number | undefined) =>
+    value === undefined
+      ? "—"
+      : formatDecimal(value)?.replace("-", "−") ?? "—";
+
+  return `${label(start)}…${label(end)} °C`;
+}
+
+function formatRouteDimensions(
+  length: string | undefined,
+  width: string | undefined,
+  height: string | undefined,
+) {
+  const dimensions = [
+    formatDecimal(length),
+    formatDecimal(width),
+    formatDecimal(height),
+  ];
+
+  return dimensions.some((value) => value !== undefined)
+    ? `${dimensions.map((value) => value ?? "—").join(" × ")} м`
+    : undefined;
+}
+
 function mapFlags(
   flags: Record<string, boolean | null | undefined> | undefined,
   labels: Record<string, string>,
@@ -95,6 +150,7 @@ function mapRoute(
       operationLabel,
       city,
       dateLabel: formatDateTime(point.start_date),
+      dateTime: validDateTime(point.start_date),
       ...(canViewPointDetails
         ? {
             address: usefulText(point.location?.loading_address),
@@ -109,8 +165,17 @@ function mapRoute(
         : {}),
       cargo: {
         name: usefulText(point.cargo?.name),
+        packageName: usefulText(point.cargo?.package_name),
+        packageAmount: finiteNumber(point.cargo?.package_amount),
         weight: usefulText(point.cargo?.weight),
         volume: usefulText(point.cargo?.volume),
+        dimensionsLabel: formatRouteDimensions(
+          point.cargo?.length,
+          point.cargo?.width,
+          point.cargo?.height,
+        ),
+        oversized:
+          point.cargo?.oversized === true ? true : undefined,
       },
     };
   });
@@ -149,6 +214,42 @@ export function mapAuctionDetail(
   const status = detail.trading.status;
   const knownStatus = status && status in statusLabels ? status : undefined;
   const code = currencyCode(detail);
+  const car = detail.cargo.car;
+  const vehicle = car
+    ? {
+        type: usefulText(car.type),
+        weightTons: finiteNumber(car.weight),
+        volumeCubicMeters: finiteNumber(car.volume),
+        widthMeters: finiteNumber(car.width),
+        lengthMeters: finiteNumber(car.length),
+        heightMeters: finiteNumber(car.height),
+      }
+    : undefined;
+  const hasVehicleRequirement =
+    vehicle !== undefined &&
+    Object.values(vehicle).some((value) => value !== undefined);
+  const equipmentLabels = [
+    finiteNumber(detail.cargo.conics) === undefined
+      ? undefined
+      : `Коники: ${detail.cargo.conics}`,
+    finiteNumber(detail.cargo.belts) === undefined
+      ? undefined
+      : `Ремни: ${detail.cargo.belts}`,
+    detail.cargo.coupling === true ? "Сцепка" : undefined,
+    detail.cargo.air_pass === true ? "Пневмоход" : undefined,
+    detail.cargo.low_loader === true
+      ? "Низкорамная платформа"
+      : undefined,
+    detail.cargo.additional_load === true ? "Догруз" : undefined,
+    detail.cargo.containered === true
+      ? `Контейнер: ${[
+          usefulText(detail.cargo.container_type),
+          usefulText(detail.cargo.container_size),
+        ]
+          .filter((value): value is string => value !== undefined)
+          .join(" · ") || "тип не указан"}`
+      : undefined,
+  ].filter((label): label is string => label !== undefined);
 
   return {
     access,
@@ -178,15 +279,26 @@ export function mapAuctionDetail(
       bodyType: usefulText(detail.cargo.body_type),
       truckCount: finiteNumber(detail.cargo.truck_count),
       distanceKm: finiteNumber(detail.cargo.distance),
+      isInternational: detail.cargo.is_international === true,
+      temperatureLabel: formatTemperature(
+        detail.cargo.temp_from,
+        detail.cargo.temp_to,
+      ),
+      adrClass: finiteNumber(detail.cargo.adr),
       loadingLabels: mapFlags(detail.cargo.loading_types, {
-        back: "Задняя",
         side: "Боковая",
         top: "Верхняя",
+        rear: "Задняя",
+        full: "Полная растентовка",
       }),
       documentLabels: mapFlags(detail.cargo.docs, {
+        tir: "TIR",
         cmr: "CMR",
-        ttn: "ТТН",
+        t1: "T1",
+        med: "Медицинские документы",
       }),
+      equipmentLabels,
+      vehicle: hasVehicleRequirement ? vehicle : undefined,
       value:
         access.canViewCargoValue && Number.isFinite(cargoValue)
           ? { amount: cargoValue, currencyCode: code }
@@ -213,6 +325,8 @@ export function mapAuctionDetail(
       stopTimeLabel: formatDateTime(detail.trading.stop_time),
       currentPrice: finiteNumber(detail.trading.price?.current),
       availablePrice: finiteNumber(detail.trading.price?.available),
+      minPrice: finiteNumber(detail.trading.price?.min),
+      maxPrice: finiteNumber(detail.trading.price?.max),
       ownLastBet: finiteNumber(detail.trading.your?.last_bet_with_vat),
       step: finiteNumber(detail.trading.price?.step),
       currencyCode: code,

@@ -25,15 +25,41 @@ export function RouteTimeline({ points }: RouteTimelineProps) {
           <div className="route-timeline__body">
             <div className="route-timeline__heading">
               <span>{point.operationLabel}</span>
-              {point.dateLabel ? <time>{point.dateLabel}</time> : null}
+              {point.dateLabel ? (
+                <time dateTime={point.dateTime}>{point.dateLabel}</time>
+              ) : null}
             </div>
             <strong>{point.city}</strong>
             {point.address ? <p>{point.address}</p> : null}
-            {point.cargo.name ? (
+            {[
+              point.cargo.name,
+              point.cargo.packageName,
+              point.cargo.packageAmount === undefined
+                ? undefined
+                : `${point.cargo.packageAmount} мест`,
+              point.cargo.weight ? `${point.cargo.weight} т` : undefined,
+              point.cargo.volume ? `${point.cargo.volume} м³` : undefined,
+              point.cargo.dimensionsLabel,
+              point.cargo.oversized ? "Негабаритный" : undefined,
+            ].some((value) => value !== undefined) ? (
               <p className="route-timeline__cargo">
-                {point.cargo.name}
-                {point.cargo.weight ? ` · ${point.cargo.weight} т` : ""}
-                {point.cargo.volume ? ` · ${point.cargo.volume} м³` : ""}
+                {[
+                  point.cargo.name,
+                  point.cargo.packageName,
+                  point.cargo.packageAmount === undefined
+                    ? undefined
+                    : `${point.cargo.packageAmount} мест`,
+                  point.cargo.weight
+                    ? `${point.cargo.weight} т`
+                    : undefined,
+                  point.cargo.volume
+                    ? `${point.cargo.volume} м³`
+                    : undefined,
+                  point.cargo.dimensionsLabel,
+                  point.cargo.oversized ? "Негабаритный" : undefined,
+                ]
+                  .filter((value): value is string => value !== undefined)
+                  .join(" · ")}
               </p>
             ) : null}
             {point.contact ? (

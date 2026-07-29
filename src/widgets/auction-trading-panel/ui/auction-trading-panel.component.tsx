@@ -2,8 +2,8 @@ import { ArrowRight, Clock3 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import type { AuctionDetailViewModel } from "@/entities/auction/model/auction-detail.vm";
+import { formatMoney } from "@/shared/lib/format-money";
 
-import { formatAuctionMoney } from "../model/auction-money";
 
 type AuctionTradingPanelProps = {
   access: AuctionDetailViewModel["access"];
@@ -29,7 +29,7 @@ export function AuctionTradingPanel({
       <h2 id="trading-title">
         {trading.currentPrice === undefined
           ? "Цена не указана"
-          : formatAuctionMoney(
+          : formatMoney(
               trading.currentPrice,
               trading.currencyCode,
             )}
@@ -38,7 +38,7 @@ export function AuctionTradingPanel({
         <p className="trading-panel__available">
           Доступная цена{" "}
           <strong>
-            {formatAuctionMoney(
+            {formatMoney(
               trading.availablePrice,
               trading.currencyCode,
             )}
@@ -52,14 +52,25 @@ export function AuctionTradingPanel({
         </p>
       ) : null}
       {access.canSetBet && auctionUuid ? (
-        <Link
-          className="trading-panel__action"
-          to="/auctions/$auctionUuid/bet"
-          params={{ auctionUuid }}
-        >
-          Сделать ставку
-          <ArrowRight size={18} aria-hidden="true" />
-        </Link>
+        <div className="trading-panel__bid-dock">
+          <span className="trading-panel__dock-price" aria-hidden="true">
+            {trading.currentPrice === undefined
+              ? "Цена не указана"
+              : formatMoney(trading.currentPrice, trading.currencyCode)}
+          </span>
+          <Link
+            className="trading-panel__action"
+            to="/auctions/$auctionUuid/bet"
+            params={{ auctionUuid }}
+            aria-label="Сделать ставку"
+          >
+            <span className="trading-panel__action-full">Сделать ставку</span>
+            <span className="trading-panel__action-short" aria-hidden="true">
+              Ставка
+            </span>
+            <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
       ) : (
         <p className="trading-panel__unavailable">
           Ставка сейчас недоступна
@@ -69,13 +80,25 @@ export function AuctionTradingPanel({
         <p className="trading-panel__own-bid">
           Ваша ставка{" "}
           <strong>
-            {formatAuctionMoney(trading.ownLastBet, trading.currencyCode)}
+            {formatMoney(trading.ownLastBet, trading.currencyCode)}
           </strong>
         </p>
       ) : null}
       {trading.step !== undefined ? (
         <p className="trading-panel__step">
-          Шаг торгов: {formatAuctionMoney(trading.step, trading.currencyCode)}
+          Шаг торгов: {formatMoney(trading.step, trading.currencyCode)}
+        </p>
+      ) : null}
+      {trading.minPrice !== undefined || trading.maxPrice !== undefined ? (
+        <p className="trading-panel__bounds">
+          Диапазон:{" "}
+          {trading.minPrice === undefined
+            ? "без минимума"
+            : formatMoney(trading.minPrice, trading.currencyCode)}
+          {" — "}
+          {trading.maxPrice === undefined
+            ? "без максимума"
+            : formatMoney(trading.maxPrice, trading.currencyCode)}
         </p>
       ) : null}
     </aside>

@@ -6,6 +6,7 @@ export type AuctionRoutePointViewModel = {
   operationLabel: string;
   city: string;
   dateLabel?: string;
+  dateTime?: string;
   address?: string;
   contact?: {
     name?: string;
@@ -13,8 +14,12 @@ export type AuctionRoutePointViewModel = {
   };
   cargo: {
     name?: string;
+    packageName?: string;
+    packageAmount?: number;
     weight?: string;
     volume?: string;
+    dimensionsLabel?: string;
+    oversized?: boolean;
   };
 };
 
@@ -39,8 +44,20 @@ export type AuctionDetailViewModel = {
     bodyType?: string;
     truckCount?: number;
     distanceKm?: number;
+    isInternational: boolean;
+    temperatureLabel?: string;
+    adrClass?: number;
     loadingLabels: readonly string[];
     documentLabels: readonly string[];
+    equipmentLabels: readonly string[];
+    vehicle?: {
+      type?: string;
+      weightTons?: number;
+      volumeCubicMeters?: number;
+      widthMeters?: number;
+      lengthMeters?: number;
+      heightMeters?: number;
+    };
     value?: {
       amount: number;
       currencyCode?: string;
@@ -58,6 +75,8 @@ export type AuctionDetailViewModel = {
     stopTimeLabel?: string;
     currentPrice?: number;
     availablePrice?: number;
+    minPrice?: number;
+    maxPrice?: number;
     ownLastBet?: number;
     step?: number;
     currencyCode?: string;

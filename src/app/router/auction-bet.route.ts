@@ -1,15 +1,14 @@
-import { createRoute, notFound } from "@tanstack/react-router";
+import {
+  createRoute,
+  lazyRouteComponent,
+  notFound,
+} from "@tanstack/react-router";
 
 import { rootRoute } from "@/app/router/root.route";
 import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.queries";
 import { resolveAuctionAccess } from "@/entities/auction/model/auction-access";
 import { mapSetBetViewModel } from "@/features/set-bet/model/set-bet.vm";
-import {
-  AuctionBetPage,
-  AuctionBetPendingPage,
-  type AuctionBetLoaderData,
-} from "@/pages/auction-bet/auction-bet-page.component";
-import { AuctionDetailNotFoundPage } from "@/pages/auction-detail/auction-detail-page.component";
+import type { AuctionBetLoaderData } from "@/pages/auction-bet/auction-bet-page.component";
 import { ApiError } from "@/shared/api/api-error";
 import { RouteErrorState } from "@/shared/ui/error-state/error-state.component";
 
@@ -46,9 +45,18 @@ export const auctionBetRoute = createRoute({
       throw error;
     }
   },
-  component: AuctionBetPage,
-  pendingComponent: AuctionBetPendingPage,
+  component: lazyRouteComponent(
+    () => import("@/pages/auction-bet/auction-bet-page.component"),
+    "AuctionBetPage",
+  ),
+  pendingComponent: lazyRouteComponent(
+    () => import("@/pages/auction-bet/auction-bet-page.component"),
+    "AuctionBetPendingPage",
+  ),
   pendingMs: 0,
-  notFoundComponent: AuctionDetailNotFoundPage,
+  notFoundComponent: lazyRouteComponent(
+    () => import("@/pages/auction-detail/auction-detail-page.component"),
+    "AuctionDetailNotFoundPage",
+  ),
   errorComponent: RouteErrorState,
 });

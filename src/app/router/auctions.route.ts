@@ -1,7 +1,10 @@
-import { createRoute, type SearchSchemaInput } from "@tanstack/react-router";
+import {
+  createRoute,
+  lazyRouteComponent,
+  type SearchSchemaInput,
+} from "@tanstack/react-router";
 
 import { rootRoute } from "@/app/router/root.route";
-import { AuctionListPage } from "@/pages/auction-list/auction-list-page.component";
 import {
   auctionSearchSchema,
   type AuctionSearch,
@@ -14,5 +17,8 @@ export const auctionsRoute = createRoute({
   path: "/auctions",
   validateSearch: (search: AuctionSearchInput): AuctionSearch =>
     auctionSearchSchema.parse(search),
-  component: AuctionListPage,
+  component: lazyRouteComponent(
+    () => import("@/pages/auction-list/auction-list-page.component"),
+    "AuctionListPage",
+  ),
 });

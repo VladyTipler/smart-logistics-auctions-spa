@@ -12,7 +12,7 @@ export interface AuctionFixture {
 interface AuctionSeed {
   aucType: "Request" | "Up" | "Down" | "FixPrice";
   available: number;
-  canSetBet: boolean;
+  canSetBet?: boolean;
   cargoNum: string;
   currentPrice: number;
   id: number;
@@ -107,7 +107,6 @@ const seeds: readonly AuctionSeed[] = [
     loadDate: "2026-08-04T12:00:00+03:00",
     currentPrice: 75_000,
     available: 74_500,
-    canSetBet: false,
     isAvailable: false,
     isBidder: true,
   },
@@ -331,8 +330,8 @@ export const betFixtures: readonly BetItem[] = [
     subscriber_id: 77,
     contact_name: "Пётр",
     contact_phone: "+37361111111",
-    price_with_vat: 28_000,
-    price_no_vat: 28_000 / 1.2,
+    price_with_vat: 32_000,
+    price_no_vat: 32_000 / 1.2,
     organization_id: 770,
     organization_inn: "1000000001",
     organization_name: "Fast Freight",
@@ -343,8 +342,8 @@ export const betFixtures: readonly BetItem[] = [
     run_number: 0,
     cancel_reason: "",
     price_info: {
-      price_with_vat: 28_000,
-      price_no_vat: 28_000 / 1.2,
+      price_with_vat: 32_000,
+      price_no_vat: 32_000 / 1.2,
       payment_type: "Безналичная с НДС",
       vat_rate: "20",
     },

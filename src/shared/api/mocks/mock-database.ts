@@ -14,6 +14,15 @@ interface MutableAuction {
   listItem: AuctionListItem;
 }
 
+export interface BidValidationError {
+  code:
+    | "bid_not_improving"
+    | "invalid_step"
+    | "next_price_not_reached"
+    | "out_of_range";
+  message: string;
+}
+
 const CURRENT_SUBSCRIBER_ID = 13;
 const CURRENT_ORGANIZATION_ID = 14;
 
@@ -125,6 +134,74 @@ export function canSetAuctionBet(orderUid: string): boolean | undefined {
   return findAuction(orderUid)?.detail.trading.can_set_bet;
 }
 
+export function hasAuction(orderUid: string): boolean {
+  return findAuction(orderUid) !== undefined;
+}
+
+export function validateAuctionBet(
+  orderUid: string,
+  price: number,
+): BidValidationError | undefined {
+  const auction = findAuction(orderUid);
+
+  if (!auction) {
+    return undefined;
+  }
+
+  const tradingPrice = auction.detail.trading.price;
+  const current = tradingPrice?.current;
+  const step = tradingPrice?.step ?? 0;
+  const minimum = Math.max(tradingPrice?.min ?? 0, 0);
+  const maximum = tradingPrice?.max ?? Number.POSITIVE_INFINITY;
+  const isUpAuction = auction.listItem.main?.auc_type === "Up";
+
+  if (price < minimum || price > maximum) {
+    return {
+      code: "out_of_range",
+      message: `Ставка должна быть от ${minimum} до ${maximum}.`,
+    };
+  }
+
+  if (
+    current != null &&
+    (isUpAuction ? price <= current : price >= current)
+  ) {
+    return {
+      code: "bid_not_improving",
+      message: "Ставка должна улучшать текущую цену.",
+    };
+  }
+
+  const available =
+    tradingPrice?.available ??
+    (current == null
+      ? price
+      : isUpAuction
+        ? current + step
+        : current - step);
+
+  if (isUpAuction ? price < available : price > available) {
+    return {
+      code: "next_price_not_reached",
+      message: `Следующая доступная ставка: ${available}.`,
+    };
+  }
+
+  if (current != null && step > 0) {
+    const stepCount = Math.abs(price - current) / step;
+    const isAligned = Math.abs(stepCount - Math.round(stepCount)) < 1e-9;
+
+    if (!isAligned) {
+      return {
+        code: "invalid_step",
+        message: `Ставка должна изменяться с шагом ${step}.`,
+      };
+    }
+  }
+
+  return undefined;
+}
+
 export function createAuctionBet(
   orderUid: string,
   price: number,
@@ -137,8 +214,16 @@ export function createAuctionBet(
 
   const priceNoVat = price / 1.2;
   const step = auction.detail.trading.price?.step ?? 0;
+  const minimum = Math.max(auction.detail.trading.price?.min ?? 0, 0);
+  const maximum =
+    auction.detail.trading.price?.max ?? Number.POSITIVE_INFINITY;
   const isUpAuction = auction.listItem.main?.auc_type === "Up";
-  const available = isUpAuction ? price + step : price - step;
+  const available = isUpAuction
+    ? Math.min(price + step, maximum)
+    : Math.max(price - step, minimum);
+  const reachedBoundary = isUpAuction
+    ? price >= maximum
+    : price <= minimum;
   const bid: BetItem = {
     id: nextBidId,
     created_at: `2026-07-29T12:${String(nextBidId).padStart(2, "0")}:00+03:00`,
@@ -175,7 +260,8 @@ export function createAuctionBet(
   if (listTrading) {
     listTrading.status_mobile = "Leading";
     listTrading.is_bidder = true;
-    listTrading.is_available = true;
+    listTrading.is_available = !reachedBoundary;
+    listTrading.can_set_bet = !reachedBoundary;
     listTrading.price = {
       ...listTrading.price,
       current: price,
@@ -189,6 +275,7 @@ export function createAuctionBet(
 
   detailTrading.status_mobile = "Leading";
   detailTrading.is_bidder = true;
+  detailTrading.can_set_bet = !reachedBoundary;
   detailTrading.price = {
     ...detailTrading.price,
     current: price,

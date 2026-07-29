@@ -10,7 +10,12 @@ import type {
 import { createHttpClient } from "../http-client";
 import { handlers } from "./handlers";
 import * as mockDatabase from "./mock-database";
-import { resetMockDatabase } from "./mock-database";
+import {
+  queryAuctionBets,
+  queryAuctionDetail,
+  queryAuctionList,
+  resetMockDatabase,
+} from "./mock-database";
 
 const API_ORIGIN = "http://localhost";
 const ALLOWED_AUCTION_UUID = "11111111-1111-4111-8111-111111111111";
@@ -44,6 +49,16 @@ function setBet(uuid: string, body: SetBetRequest) {
     `/auctions/${uuid}/bets`,
     body,
   );
+}
+
+async function getAuctionState(uuid: string) {
+  const [list, detail, history] = await Promise.all([
+    listAuctions({ cargo_num: "SL-1001" }),
+    getAuction(uuid),
+    getBets(uuid, true),
+  ]);
+
+  return { list, detail, history };
 }
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -88,6 +103,44 @@ describe("stateful auction mock backend", () => {
       current_page: 1,
       per_page: 20,
       total: 5,
+    });
+  });
+
+  it.each([
+    ["null", null],
+    ["an array", []],
+    ["a string", "all"],
+  ])("returns 422 ValidationProblem when list body is %s", async (_name, body) => {
+    await expect(
+      client.post<AuctionListResponse, unknown>("/auctions/list", body),
+    ).rejects.toMatchObject({
+      status: 422,
+      problem: {
+        code: "validation_failed",
+        errors: [
+          {
+            field: "body",
+            code: "invalid_type",
+          },
+        ],
+      },
+    });
+  });
+
+  it("returns 422 ValidationProblem for malformed list JSON", async () => {
+    const response = await fetch(`${API_ORIGIN}/api/v1/auctions/list`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{malformed",
+    });
+
+    expect(response.status).toBe(422);
+    expect(response.headers.get("content-type")).toContain(
+      "application/problem+json",
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      code: "validation_failed",
+      errors: [{ field: "body", code: "invalid_json" }],
     });
   });
 
@@ -215,6 +268,55 @@ describe("stateful auction mock backend", () => {
   });
 
   it.each([
+    ["repeated current price", 32_000, "bid_not_improving"],
+    ["a worse price", 32_500, "bid_not_improving"],
+    ["an out-of-range price", 500, "out_of_range"],
+    ["a price before the available threshold", 31_750, "next_price_not_reached"],
+    ["an off-step price", 31_250, "invalid_step"],
+  ])(
+    "rejects %s without mutating any auction snapshot",
+    async (_name, price, code) => {
+      const before = await getAuctionState(ALLOWED_AUCTION_UUID);
+
+      await expect(
+        setBet(ALLOWED_AUCTION_UUID, { price }),
+      ).rejects.toMatchObject({
+        status: 422,
+        problem: {
+          code: "validation_failed",
+          errors: [{ field: "price", code }],
+        },
+      });
+
+      await expect(getAuctionState(ALLOWED_AUCTION_UUID)).resolves.toEqual(
+        before,
+      );
+    },
+  );
+
+  it("stops bidding at the lower bound without producing negative availability", async () => {
+    await setBet(ALLOWED_AUCTION_UUID, { price: 1_000 });
+
+    const state = await getAuctionState(ALLOWED_AUCTION_UUID);
+
+    expect(state.list.data?.[0]?.trading).toMatchObject({
+      can_set_bet: false,
+      is_available: false,
+      price: { current: 1_000 },
+    });
+    expect(state.detail.trading).toMatchObject({
+      can_set_bet: false,
+      price: { current: 1_000, available: 1_000 },
+    });
+    await expect(
+      setBet(ALLOWED_AUCTION_UUID, { price: 500 }),
+    ).rejects.toMatchObject({
+      status: 403,
+      problem: { code: "bet_not_allowed" },
+    });
+  });
+
+  it.each([
     ["zero", { price: 0 }],
     ["negative", { price: -100 }],
     ["not finite", { price: Number.POSITIVE_INFINITY }],
@@ -243,6 +345,18 @@ describe("stateful auction mock backend", () => {
         code: "bet_not_allowed",
         title: "Ставка недоступна",
         errors: [],
+      },
+    });
+  });
+
+  it("treats an existing auction with omitted can_set_bet as forbidden", async () => {
+    await expect(
+      setBet(HIDDEN_HISTORY_UUID, { price: 70_000 }),
+    ).rejects.toMatchObject({
+      status: 403,
+      problem: {
+        code: "bet_not_allowed",
+        title: "Ставка недоступна",
       },
     });
   });
@@ -295,5 +409,33 @@ describe("stateful auction mock backend", () => {
     expect(
       Object.values(mockDatabase).every((value) => typeof value === "function"),
     ).toBe(true);
+  });
+
+  it("isolates database list, detail, and bets operation snapshots", () => {
+    const list = queryAuctionList({ cargo_num: "SL-1001" });
+    const detail = queryAuctionDetail(ALLOWED_AUCTION_UUID);
+    const history = queryAuctionBets(ALLOWED_AUCTION_UUID, true);
+
+    if (list.data?.[0]?.main) {
+      list.data[0].main.cargo_num = "MUTATED";
+    }
+    if (detail) {
+      detail.main.cargo_num = "MUTATED";
+      detail.trading.price = { current: -1 };
+    }
+    if (history?.bets[0]) {
+      history.bets[0].price_with_vat = -1;
+    }
+    history?.bets.push({ id: -1 });
+
+    const freshList = queryAuctionList({ cargo_num: "SL-1001" });
+    const freshDetail = queryAuctionDetail(ALLOWED_AUCTION_UUID);
+    const freshHistory = queryAuctionBets(ALLOWED_AUCTION_UUID, true);
+
+    expect(freshList.data?.[0]?.main?.cargo_num).toBe("SL-1001");
+    expect(freshDetail?.main.cargo_num).toBe("SL-1001");
+    expect(freshDetail?.trading.price?.current).toBe(32_000);
+    expect(freshHistory?.bets[0]?.price_with_vat).toBe(32_000);
+    expect(freshHistory?.bets).not.toContainEqual({ id: -1 });
   });
 });

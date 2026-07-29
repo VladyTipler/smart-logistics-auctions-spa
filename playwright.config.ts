@@ -30,7 +30,7 @@ export default defineConfig({
   ],
   webServer: {
     command:
-      `powershell -NoProfile -Command "node ./node_modules/vite/bin/vite.js --host=${host} --port=${port} --strictPort"`,
+      `node ./node_modules/vite/bin/vite.js --host=${host} --port=${port} --strictPort`,
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,

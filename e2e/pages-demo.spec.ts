@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const repositoryBasePath = "/smart-logistics-auctions-spa";
+import { PAGES_REPOSITORY_BASE_PATH } from "../pages.config";
+
 const auctionUuid = "11111111-1111-4111-8111-111111111111";
 
 type ApiResponse = {
@@ -58,11 +59,11 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
   });
 
   try {
-    await page.goto(`${repositoryBasePath}/#/auctions`);
+    await page.goto(`${PAGES_REPOSITORY_BASE_PATH}#/auctions`);
 
     await expect(page).toHaveURL(
       new RegExp(
-        `${repositoryBasePath}/#/auctions(?:\\?.*)?$`,
+        `${PAGES_REPOSITORY_BASE_PATH}#/auctions(?:\\?.*)?$`,
       ),
     );
     await expect(page.getByText("Найдено: 5")).toBeVisible();
@@ -77,7 +78,7 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
       .getByRole("link", { name: /^Сделать ставку: SL-1001,/ })
       .click();
     await expect(page).toHaveURL(
-      `${repositoryBasePath}/#/auctions/${auctionUuid}/bet`,
+      `${PAGES_REPOSITORY_BASE_PATH}#/auctions/${auctionUuid}/bet`,
     );
 
     await page.getByRole("textbox", { name: "Сумма ставки" }).fill("31000");
@@ -85,7 +86,8 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
     await expect(page.getByLabel("Ставка принята")).toBeVisible();
 
     await page.getByRole("link", { name: "К аукциону" }).click();
-    const detailUrl = `${repositoryBasePath}/#/auctions/${auctionUuid}`;
+    const detailUrl =
+      `${PAGES_REPOSITORY_BASE_PATH}#/auctions/${auctionUuid}`;
     await expect(page).toHaveURL(detailUrl);
     await expect(
       page.getByRole("heading", { name: "Аукцион SL-1001" }),
@@ -98,10 +100,17 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
     await expect(
       page.getByRole("heading", { name: "Аукцион SL-1001" }),
     ).toBeVisible();
-    await expect(page.getByText("32 000 ₽", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "32 000 ₽" }),
+    ).toBeVisible();
+    await expect(page.getByText("Ваша ставка 31 000 ₽")).toHaveCount(0);
   } finally {
-    await testInfo.attach("pages-demo-api-responses", {
-      body: JSON.stringify(apiResponses, null, 2),
+    await testInfo.attach("pages-demo-diagnostics", {
+      body: JSON.stringify(
+        { apiResponses, apiFailures, pageErrors, consoleErrors },
+        null,
+        2,
+      ),
       contentType: "application/json",
     });
   }

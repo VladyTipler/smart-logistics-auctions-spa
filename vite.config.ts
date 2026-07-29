@@ -4,6 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+import { PAGES_REPOSITORY_BASE_PATH } from "./pages.config";
+
 type MockApiContext = {
   command: "build" | "serve";
   mode: string;
@@ -22,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
   const isDemo = mode === "demo";
 
   return {
-    ...(isDemo ? { base: "/smart-logistics-auctions-spa/" } : {}),
+    ...(isDemo ? { base: PAGES_REPOSITORY_BASE_PATH } : {}),
     define: {
       __ENABLE_MOCK_API__: JSON.stringify(enableMockApi),
     },

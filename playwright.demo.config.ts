@@ -1,9 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { PAGES_REPOSITORY_BASE_PATH } from "./pages.config";
+
 const host = "127.0.0.1";
 const port = 4174;
 const origin = `http://${host}:${port}`;
-const repositoryBasePath = "/smart-logistics-auctions-spa/";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -13,7 +14,7 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: `${origin}${repositoryBasePath}`,
+    baseURL: `${origin}${PAGES_REPOSITORY_BASE_PATH}`,
     screenshot: "only-on-failure",
     trace: "on-first-retry",
   },
@@ -26,8 +27,8 @@ export default defineConfig({
   ],
   webServer: {
     command:
-      `powershell -NoProfile -Command "node ./node_modules/vite/bin/vite.js preview --mode=demo --host=${host} --port=${port} --strictPort --outDir=dist-demo"`,
-    url: `${origin}${repositoryBasePath}`,
+      `node ./node_modules/vite/bin/vite.js preview --mode=demo --host=${host} --port=${port} --strictPort --outDir=dist-demo`,
+    url: `${origin}${PAGES_REPOSITORY_BASE_PATH}`,
     reuseExistingServer: false,
     timeout: 120_000,
   },

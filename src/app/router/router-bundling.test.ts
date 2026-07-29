@@ -2,6 +2,7 @@ import auctionBetRouteSource from "./auction-bet.route.ts?raw";
 import auctionBetsRouteSource from "./auction-bets.route.ts?raw";
 import auctionDetailRouteSource from "./auction-detail.route.ts?raw";
 import auctionsRouteSource from "./auctions.route.ts?raw";
+import testSetupSource from "@/shared/config/test/setup-tests.ts?raw";
 
 const routeModules = [
   [
@@ -27,6 +28,10 @@ const routeModules = [
 ] as const;
 
 describe("route bundle boundaries", () => {
+  it("does not warm lazy page modules from the global test setup", () => {
+    expect(testSetupSource).not.toContain('import "@/pages/');
+  });
+
   it.each(routeModules)(
     "loads the page behind %s through a dynamic import",
     (_routeFile, source, pageModule) => {

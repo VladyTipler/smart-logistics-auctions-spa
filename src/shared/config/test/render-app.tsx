@@ -1,9 +1,11 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
-import { render } from "@testing-library/react";
+import { configure, render } from "@testing-library/react";
 
 import { AppProviders } from "@/app/providers/app-providers.component";
 import { createAppRouter } from "@/app/router/router";
+
+configure({ asyncUtilTimeout: 3_000 });
 
 const originalScrollTo = window.scrollTo;
 

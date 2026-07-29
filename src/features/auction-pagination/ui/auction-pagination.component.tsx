@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
+import { buildPaginationItems } from "../model/build-pagination-items";
+
 type AuctionPaginationProps = {
   currentPage: number;
   lastPage: number;
@@ -15,22 +17,30 @@ export function AuctionPagination({
 
   return (
     <nav className="auction-pagination" aria-label="Страницы аукционов">
-      {Array.from({ length: lastPage }, (_, index) => index + 1).map(
-        (page) => (
+      {buildPaginationItems(currentPage, lastPage).map((item) =>
+        typeof item === "number" ? (
           <Link
-            key={page}
+            key={item}
             className="auction-pagination__link"
             to="/auctions"
             search={(previous) => ({
               ...previous,
-              page,
+              page: item,
               perPage: previous.perPage ?? 10,
             })}
-            aria-label={`Страница ${page}`}
-            aria-current={page === currentPage ? "page" : undefined}
+            aria-label={`Страница ${item}`}
+            aria-current={item === currentPage ? "page" : undefined}
           >
-            {String(page).padStart(2, "0")}
+            {String(item).padStart(2, "0")}
           </Link>
+        ) : (
+          <span
+            aria-hidden="true"
+            className="auction-pagination__ellipsis"
+            key={item}
+          >
+            …
+          </span>
         ),
       )}
     </nav>

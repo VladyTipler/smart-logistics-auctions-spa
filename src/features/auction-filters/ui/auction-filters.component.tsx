@@ -16,13 +16,23 @@ type AuctionFiltersProps = {
   search: AuctionSearch;
 };
 
+type ParticipationStatus = NonNullable<AuctionSearch["status"]>[number];
+type StatusFilterValue = ParticipationStatus | "all";
+
 const participationStatuses = [
   { label: "Все статусы", value: "all" },
   { label: "Не участвую", value: "NotParticipating" },
   { label: "Лидирую", value: "Leading" },
   { label: "Ставка перебита", value: "Losing" },
   { label: "Победитель", value: "Winner" },
-] as const;
+] as const satisfies readonly {
+  label: string;
+  value: StatusFilterValue;
+}[];
+
+function isStatusFilterValue(value: unknown): value is StatusFilterValue {
+  return participationStatuses.some((option) => option.value === value);
+}
 
 export function AuctionFilters({
   compact = false,
@@ -31,7 +41,7 @@ export function AuctionFilters({
   search,
 }: AuctionFiltersProps) {
   const [cargoNumber, setCargoNumber] = useState(search.cargoNum ?? "");
-  const [status, setStatus] = useState<string>(
+  const [status, setStatus] = useState<StatusFilterValue>(
     search.status?.[0] ?? "all",
   );
   const [loadCity, setLoadCity] = useState<CityOption | null>(
@@ -51,8 +61,15 @@ export function AuctionFilters({
       status:
         status === "all"
           ? undefined
-          : ([status] as AuctionSearch["status"]),
+          : [status],
     });
+  };
+  const resetDrafts = () => {
+    setCargoNumber("");
+    setStatus("all");
+    setLoadCity(null);
+    setUnloadCity(null);
+    onReset();
   };
 
   return (
@@ -76,9 +93,11 @@ export function AuctionFilters({
 
       <div className="filter-field">
         <span id={statusLabelId}>Мой статус</span>
-        <Select.Root
+        <Select.Root<StatusFilterValue>
           value={status}
-          onValueChange={(value) => setStatus(value ?? "all")}
+          onValueChange={(value) =>
+            setStatus(isStatusFilterValue(value) ? value : "all")
+          }
         >
           <Select.Trigger
             className="select-trigger"
@@ -131,7 +150,7 @@ export function AuctionFilters({
       <button className="filter-submit" type="submit">
         Применить фильтры
       </button>
-      <button className="filter-reset" type="button" onClick={onReset}>
+      <button className="filter-reset" type="button" onClick={resetDrafts}>
         <X aria-hidden="true" size={15} />
         Сбросить
       </button>

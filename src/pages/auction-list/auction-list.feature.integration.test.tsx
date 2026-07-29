@@ -137,6 +137,116 @@ describe("auction list feature", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("clears unapplied desktop drafts without changing default URL or request", async () => {
+    const bodies: Promise<unknown>[] = [];
+    server.events.on("request:start", ({ request }) => {
+      if (request.method === "POST") {
+        bodies.push(request.clone().json());
+      }
+    });
+    const user = userEvent.setup();
+    const { router } = renderApp("/auctions");
+    await screen.findByText("Найдено: 5");
+
+    const cargoNumber = screen.getByRole("textbox", {
+      name: "Номер груза",
+    });
+    await user.type(cargoNumber, "draft");
+
+    const status = screen.getByRole("combobox", { name: "Мой статус" });
+    await user.click(status);
+    await user.click(
+      await screen.findByRole("option", { name: "Лидирую" }),
+    );
+
+    const loadCity = screen.getByRole("combobox", {
+      name: "Город погрузки",
+    });
+    await user.type(loadCity, "Киш");
+    await user.keyboard("{ArrowDown}{Enter}");
+    const unloadCity = screen.getByRole("combobox", {
+      name: "Город выгрузки",
+    });
+    await user.type(unloadCity, "Бух");
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    await user.click(screen.getByRole("button", { name: "Сбросить" }));
+
+    expect(cargoNumber).toHaveValue("");
+    expect(status).toHaveTextContent("Все статусы");
+    expect(loadCity).toHaveValue("");
+    expect(unloadCity).toHaveValue("");
+    expect(router.state.location.search).toEqual({ page: 1, perPage: 10 });
+    expect(await Promise.all(bodies)).toEqual([{ page: 1, per_page: 10 }]);
+  });
+
+  it("clears mobile drafts and closes the drawer without applying them", async () => {
+    const bodies: Promise<unknown>[] = [];
+    server.events.on("request:start", ({ request }) => {
+      if (request.method === "POST") {
+        bodies.push(request.clone().json());
+      }
+    });
+    const user = userEvent.setup();
+    const { router } = renderApp("/auctions");
+    await screen.findByText("Найдено: 5");
+
+    const trigger = screen.getByRole("button", { name: "Фильтры" });
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog", {
+      name: "Фильтры аукционов",
+    });
+    const cargoNumber = within(dialog).getByRole("textbox", {
+      name: "Номер груза",
+    });
+    await user.type(cargoNumber, "draft");
+
+    const status = within(dialog).getByRole("combobox", {
+      name: "Мой статус",
+    });
+    await user.click(status);
+    await user.click(
+      await screen.findByRole("option", { name: "Лидирую" }),
+    );
+
+    const loadCity = within(dialog).getByRole("combobox", {
+      name: "Город погрузки",
+    });
+    await user.type(loadCity, "Киш");
+    await user.keyboard("{ArrowDown}{Enter}");
+    const unloadCity = within(dialog).getByRole("combobox", {
+      name: "Город выгрузки",
+    });
+    await user.type(unloadCity, "Бух");
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    await user.click(within(dialog).getByRole("button", { name: "Сбросить" }));
+
+    expect(
+      screen.queryByRole("dialog", { name: "Фильтры аукционов" }),
+    ).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(router.state.location.search).toEqual({ page: 1, perPage: 10 });
+    expect(await Promise.all(bodies)).toEqual([{ page: 1, per_page: 10 }]);
+
+    await user.click(trigger);
+    const reopened = screen.getByRole("dialog", {
+      name: "Фильтры аукционов",
+    });
+    expect(
+      within(reopened).getByRole("textbox", { name: "Номер груза" }),
+    ).toHaveValue("");
+    expect(
+      within(reopened).getByRole("combobox", { name: "Мой статус" }),
+    ).toHaveTextContent("Все статусы");
+    expect(
+      within(reopened).getByRole("combobox", { name: "Город погрузки" }),
+    ).toHaveValue("");
+    expect(
+      within(reopened).getByRole("combobox", { name: "Город выгрузки" }),
+    ).toHaveValue("");
+  });
+
   it("changes page through semantic pagination", async () => {
     const user = userEvent.setup();
     const { router } = renderApp("/auctions?perPage=2");

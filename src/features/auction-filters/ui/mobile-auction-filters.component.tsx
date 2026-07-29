@@ -1,8 +1,10 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { SlidersHorizontal, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect } from "react";
+import { useStore } from "zustand";
 
 import type { AuctionSearch } from "../model/auction-search.schema";
+import { mobileFiltersStore } from "../model/mobile-filters.store";
 import { AuctionFilters } from "./auction-filters.component";
 
 type MobileAuctionFiltersProps = {
@@ -12,11 +14,19 @@ type MobileAuctionFiltersProps = {
 };
 
 export function MobileAuctionFilters(props: MobileAuctionFiltersProps) {
-  const [open, setOpen] = useState(false);
+  const closeDrawer = useStore(
+    mobileFiltersStore,
+    (state) => state.closeDrawer,
+  );
+  const isOpen = useStore(mobileFiltersStore, (state) => state.isOpen);
+  const reset = useStore(mobileFiltersStore, (state) => state.reset);
+  const setOpen = useStore(mobileFiltersStore, (state) => state.setOpen);
+
+  useEffect(() => reset, [reset]);
 
   return (
     <div className="mobile-filters">
-      <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Root open={isOpen} onOpenChange={setOpen}>
         <Dialog.Trigger className="mobile-filters__trigger">
           <SlidersHorizontal aria-hidden="true" size={17} />
           Фильтры
@@ -34,8 +44,12 @@ export function MobileAuctionFilters(props: MobileAuctionFiltersProps) {
               {...props}
               compact
               onApply={(patch) => {
+                closeDrawer();
                 props.onApply(patch);
-                setOpen(false);
+              }}
+              onReset={() => {
+                closeDrawer();
+                props.onReset();
               }}
             />
           </Dialog.Popup>

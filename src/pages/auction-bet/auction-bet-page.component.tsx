@@ -38,6 +38,7 @@ export function AuctionBetPage() {
           className="auction-detail__back"
           to="/auctions/$auctionUuid"
           params={{ auctionUuid: auction.auctionUuid }}
+          activeOptions={{ exact: true }}
         >
           <ChevronLeft size={16} aria-hidden="true" />
           К аукциону

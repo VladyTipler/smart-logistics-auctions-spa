@@ -26,6 +26,7 @@ export function SetBetUnavailable({
         className="set-bet-unavailable__link"
         to="/auctions/$auctionUuid"
         params={{ auctionUuid }}
+        activeOptions={{ exact: true }}
       >
         К аукциону
       </Link>

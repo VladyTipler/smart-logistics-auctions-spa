@@ -61,7 +61,7 @@ a {
 }
 
 :where(a, button, input, [role="button"]):focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
@@ -89,7 +89,7 @@ a {
 
 .brand:focus-visible {
   border-radius: 0.25rem;
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -155,7 +155,7 @@ a {
 .app-navigation__link:focus-visible,
 .route-page__link:focus-visible {
   border-radius: 0.25rem;
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -278,7 +278,7 @@ a {
 .auction-pagination__link:focus-visible,
 .mobile-filters__trigger:focus-visible,
 .auction-list-state button:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 30%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 2px;
 }
 
@@ -368,7 +368,7 @@ a {
 
 .select-item {
   display: flex;
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -382,6 +382,8 @@ a {
 .select-item[data-highlighted] {
   background: rgb(30 94 255 / 8%);
   color: var(--color-route-blue);
+  outline: 2px solid var(--color-route-blue);
+  outline-offset: -2px;
 }
 
 .filter-submit,
@@ -630,7 +632,7 @@ a {
 .auction-card__action--bid {
   border-color: var(--color-signal-orange);
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
 }
 
 .auction-card__action--disabled {
@@ -658,8 +660,8 @@ a {
 
 .auction-pagination__link {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
   border: 1px solid var(--color-steel);
   border-radius: 0.18rem;
@@ -876,7 +878,7 @@ a {
 }
 
 .startup-error button:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -908,7 +910,7 @@ a {
 .trading-panel__action:focus-visible,
 .auction-detail-state__link:focus-visible {
   border-radius: 0.2rem;
-  outline: 3px solid rgb(30 94 255 / 30%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
@@ -1204,7 +1206,7 @@ a {
   margin-top: 1.35rem;
   padding-inline: 1rem;
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
@@ -1794,7 +1796,8 @@ a {
 
 .set-bet-form__input:focus-within {
   border-color: var(--color-route-blue);
-  outline: 3px solid rgb(30 94 255 / 16%);
+  outline: 3px solid var(--color-route-blue);
+  outline-offset: 2px;
 }
 
 .set-bet-form__input:has(input[aria-invalid="true"]) {
@@ -1839,24 +1842,27 @@ a {
   margin-top: 1.35rem;
   border: 0;
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
   font: 700 0.9rem/1 var(--font-sans);
   cursor: pointer;
 }
 
-.set-bet-form button:hover:not(:disabled) {
-  background: #d9571c;
+.auction-card__action--bid:hover,
+.trading-panel__action:hover,
+.set-bet-form button:hover:not(:disabled),
+.recovery-state--error .recovery-state__action:hover {
+  background: var(--color-signal-orange);
+  box-shadow: inset 0 0 0 2px var(--color-freight-ink);
 }
 
 .set-bet-form button:focus-visible,
 .set-bet-unavailable__link:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
 .set-bet-form button:disabled {
   cursor: wait;
-  opacity: 0.65;
 }
 
 .set-bet-toast {
@@ -2049,11 +2055,12 @@ a {
 .recovery-state--error .recovery-state__action {
   border-color: var(--color-signal-orange);
   background: var(--color-signal-orange);
+  color: var(--color-freight-ink);
 }
 
 .recovery-state__action:focus-visible,
 .app-toast__close:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 

@@ -1,5 +1,5 @@
 type BootstrapDependencies = {
-  isDevelopment: boolean;
+  shouldStartWorker: boolean;
   startWorker: () => Promise<void>;
   renderApp: () => void;
   renderStartupError: (error: unknown) => void;
@@ -24,13 +24,13 @@ function isApplicationAsset(url: URL) {
 }
 
 export async function bootstrapApplication({
-  isDevelopment,
+  shouldStartWorker,
   startWorker,
   renderApp,
   renderStartupError,
 }: BootstrapDependencies) {
   try {
-    if (isDevelopment) {
+    if (shouldStartWorker) {
       await startWorker();
     }
 

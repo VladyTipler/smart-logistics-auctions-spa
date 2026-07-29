@@ -4,6 +4,15 @@ const { configuredWorkerStart, emptyWorkerStart, render } = vi.hoisted(() => ({
   render: vi.fn(),
 }));
 
+vi.mock("@/shared/config/runtime-config", () => ({
+  runtimeConfig: {
+    shouldStartWorker: true,
+    serviceWorkerUrl:
+      "/smart-logistics-auctions-spa/mockServiceWorker.js",
+    routerHistory: "hash",
+  },
+}));
+
 vi.mock("react-dom/client", () => ({
   createRoot: () => ({ render }),
 }));
@@ -20,8 +29,8 @@ vi.mock("msw/browser", () => ({
   setupWorker: () => ({ start: emptyWorkerStart }),
 }));
 
-describe("development entry point", () => {
-  it("starts the configured auction worker before rendering", async () => {
+describe("demo entry point", () => {
+  it("starts the configured auction worker at the repository base before rendering", async () => {
     document.body.innerHTML = '<div id="root"></div>';
 
     await import("./main");
@@ -33,6 +42,9 @@ describe("development entry point", () => {
     expect(emptyWorkerStart).not.toHaveBeenCalled();
     expect(configuredWorkerStart).toHaveBeenCalledWith({
       onUnhandledRequest: expect.any(Function),
+      serviceWorker: {
+        url: "/smart-logistics-auctions-spa/mockServiceWorker.js",
+      },
     });
     expect(
       configuredWorkerStart.mock.invocationCallOrder[0],

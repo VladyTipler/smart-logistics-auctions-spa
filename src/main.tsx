@@ -14,6 +14,7 @@ import {
   createUnhandledRequestPolicy,
 } from "@/app/bootstrap";
 import { StartupError } from "@/app/startup-error.component";
+import { runtimeConfig } from "@/shared/config/runtime-config";
 
 const rootElement = document.querySelector("#root");
 
@@ -40,24 +41,24 @@ const renderApplication = {
   },
 };
 
-if (import.meta.env.DEV) {
-  void bootstrapApplication({
-    ...renderApplication,
-    isDevelopment: true,
-    startWorker: async () => {
-      const { worker } = await import("@/shared/api/mocks/browser");
+const startWorker =
+  import.meta.env.MODE === "production"
+    ? () => Promise.resolve()
+    : async () => {
+        const { worker } = await import("@/shared/api/mocks/browser");
 
-      await worker.start({
-        onUnhandledRequest: createUnhandledRequestPolicy(
-          window.location.origin,
-        ),
-      });
-    },
-  });
-} else {
-  void bootstrapApplication({
-    ...renderApplication,
-    isDevelopment: false,
-    startWorker: () => Promise.resolve(),
-  });
-}
+        await worker.start({
+          onUnhandledRequest: createUnhandledRequestPolicy(
+            window.location.origin,
+          ),
+          serviceWorker: {
+            url: runtimeConfig.serviceWorkerUrl,
+          },
+        });
+      };
+
+void bootstrapApplication({
+  ...renderApplication,
+  shouldStartWorker: runtimeConfig.shouldStartWorker,
+  startWorker,
+});

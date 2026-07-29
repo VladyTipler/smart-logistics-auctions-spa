@@ -4,7 +4,7 @@ import {
 } from "@/app/bootstrap";
 
 describe("application bootstrap", () => {
-  it("waits for the worker before rendering in development", async () => {
+  it("waits for the worker before rendering when mocks are enabled", async () => {
     let resolveWorker!: () => void;
     const workerStarted = new Promise<void>((resolve) => {
       resolveWorker = resolve;
@@ -14,7 +14,7 @@ describe("application bootstrap", () => {
     const renderStartupError = vi.fn();
 
     const bootstrap = bootstrapApplication({
-      isDevelopment: true,
+      shouldStartWorker: true,
       startWorker,
       renderApp,
       renderStartupError,
@@ -30,12 +30,12 @@ describe("application bootstrap", () => {
     expect(renderStartupError).not.toHaveBeenCalled();
   });
 
-  it("skips the worker in production", async () => {
+  it("skips the worker when mocks are disabled", async () => {
     const startWorker = vi.fn();
     const renderApp = vi.fn();
 
     await bootstrapApplication({
-      isDevelopment: false,
+      shouldStartWorker: false,
       startWorker,
       renderApp,
       renderStartupError: vi.fn(),
@@ -52,7 +52,7 @@ describe("application bootstrap", () => {
 
     await expect(
       bootstrapApplication({
-        isDevelopment: true,
+        shouldStartWorker: true,
         startWorker: vi.fn().mockRejectedValue(startupFailure),
         renderApp,
         renderStartupError,

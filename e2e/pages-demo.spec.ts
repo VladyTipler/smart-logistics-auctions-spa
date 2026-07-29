@@ -4,6 +4,7 @@ const repositoryBasePath = "/smart-logistics-auctions-spa";
 const auctionUuid = "11111111-1111-4111-8111-111111111111";
 
 type ApiResponse = {
+  fromServiceWorker: boolean;
   method: string;
   path: string;
   status: number;
@@ -22,6 +23,7 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
 
     if (url.pathname.startsWith("/api/v1/")) {
       const record = {
+        fromServiceWorker: response.fromServiceWorker(),
         method: response.request().method(),
         path: `${url.pathname}${url.search}`,
         status: response.status(),
@@ -65,6 +67,11 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
     );
     await expect(page.getByText("Найдено: 5")).toBeVisible();
     await expect(page.getByText("SL-1001", { exact: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => navigator.serviceWorker.controller?.state),
+      )
+      .toBe("activated");
 
     await page
       .getByRole("link", { name: /^Сделать ставку: SL-1001,/ })
@@ -101,7 +108,8 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
 
   expect(
     apiResponses.some(
-      ({ method, path, status }) =>
+      ({ fromServiceWorker, method, path, status }) =>
+        fromServiceWorker &&
         method === "POST" &&
         path === "/api/v1/auctions/list" &&
         status === 200,
@@ -109,7 +117,8 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
   ).toBe(true);
   expect(
     apiResponses.some(
-      ({ method, path, status }) =>
+      ({ fromServiceWorker, method, path, status }) =>
+        fromServiceWorker &&
         method === "POST" &&
         path === `/api/v1/auctions/${auctionUuid}/bets` &&
         status === 200,
@@ -117,12 +126,19 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
   ).toBe(true);
   expect(
     apiResponses.filter(
-      ({ method, path, status }) =>
+      ({ fromServiceWorker, method, path, status }) =>
+        fromServiceWorker &&
         method === "GET" &&
         path === `/api/v1/auctions/${auctionUuid}` &&
         status === 200,
     ).length,
   ).toBeGreaterThanOrEqual(2);
+  expect(
+    apiResponses
+      .filter(({ status }) => status >= 200 && status < 300)
+      .every(({ fromServiceWorker }) => fromServiceWorker),
+    "successful /api/v1 responses served by the Service Worker",
+  ).toBe(true);
   expect(apiFailures, "failed /api/v1 requests").toEqual([]);
   expect(pageErrors, "uncaught page errors").toEqual([]);
   expect(consoleErrors, "browser console errors").toEqual([]);

@@ -5,7 +5,12 @@ import type {
 } from "@/shared/api/contracts";
 import { createHttpClient } from "@/shared/api/http-client";
 
-const client = createHttpClient({ baseUrl: "/api/v1" });
+const apiBaseUrl =
+  typeof window === "undefined"
+    ? "/api/v1"
+    : new URL("/api/v1", window.location.origin).toString().replace(/\/$/, "");
+
+const client = createHttpClient({ baseUrl: apiBaseUrl });
 
 export const auctionApi = {
   getDetail(auctionUuid: string) {

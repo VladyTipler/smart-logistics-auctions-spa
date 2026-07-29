@@ -4,7 +4,9 @@ import {
   stringifySearchWith,
   type RouterHistory,
 } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
 
+import { appQueryClient } from "@/app/providers/query-client";
 import { auctionBetRoute } from "@/app/router/auction-bet.route";
 import { auctionBetsRoute } from "@/app/router/auction-bets.route";
 import { auctionDetailRoute } from "@/app/router/auction-detail.route";
@@ -20,6 +22,7 @@ const routeTree = rootRoute.addChildren([
 
 type CreateAppRouterOptions = {
   history?: RouterHistory;
+  queryClient?: QueryClient;
 };
 
 function parseStructuredSearchValue(value: string): unknown {
@@ -43,10 +46,14 @@ export const stringifyAppSearch = stringifySearchWith(
   parseStructuredSearchValue,
 );
 
-export function createAppRouter({ history }: CreateAppRouterOptions = {}) {
+export function createAppRouter({
+  history,
+  queryClient = appQueryClient,
+}: CreateAppRouterOptions = {}) {
   return createRouter({
     routeTree,
     history,
+    context: { queryClient },
     parseSearch: parseAppSearch,
     stringifySearch: stringifyAppSearch,
     defaultPreload: "intent",

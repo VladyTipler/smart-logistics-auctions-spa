@@ -13,7 +13,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run && npm run test:artifacts",
-    "test:artifacts": "node --test ./scripts/artifact-verifier-core.test.mjs ./scripts/verify-production-artifacts.test.mjs ./scripts/verify-demo-artifacts.test.mjs",
+    "test:artifacts": "node --test ./scripts/artifact-verifier-core.test.mjs ./scripts/verify-production-artifacts.test.mjs ./scripts/verify-demo-artifacts.test.mjs ./scripts/verify-pages-workflow.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

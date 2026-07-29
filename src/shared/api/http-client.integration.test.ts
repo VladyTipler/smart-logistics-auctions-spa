@@ -112,6 +112,29 @@ describe("typed HTTP client", () => {
     });
   });
 
+  it("keeps malformed error payload separate from typed problem details", async () => {
+    const malformedPayload = {
+      code: "upstream_failure",
+      debug: { retryable: true },
+    };
+
+    server.use(
+      http.get(`${API_ORIGIN}/api/v1/auctions/broken`, () =>
+        HttpResponse.json(malformedPayload, {
+          status: 503,
+          headers: { "Content-Type": "application/problem+json" },
+        }),
+      ),
+    );
+
+    await expect(client.get("/auctions/broken")).rejects.toMatchObject({
+      status: 503,
+      payload: malformedPayload,
+      problem: undefined,
+      message: "API request failed with status 503",
+    });
+  });
+
   it("returns undefined for an empty successful response", async () => {
     server.use(
       http.post(

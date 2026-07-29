@@ -8,6 +8,7 @@ import {
   type AppRouter,
 } from "@/app/router/router";
 import { appQueryClient } from "@/app/providers/query-client";
+import { AppToastProvider } from "@/shared/ui/toast/app-toast-provider.component";
 
 type AppProvidersProps = {
   queryClient?: QueryClient;
@@ -41,8 +42,10 @@ export function AppProviders({
   );
 
   return (
-    <QueryClientProvider client={providerClient}>
-      <RouterProvider router={resolvedRouter} />
-    </QueryClientProvider>
+    <AppToastProvider>
+      <QueryClientProvider client={providerClient}>
+        <RouterProvider router={resolvedRouter} />
+      </QueryClientProvider>
+    </AppToastProvider>
   );
 }

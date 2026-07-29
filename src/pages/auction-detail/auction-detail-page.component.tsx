@@ -6,6 +6,7 @@ import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.querie
 import { mapAuctionDetail } from "@/entities/auction/model/map-auction-detail";
 import { AuctionDetail } from "@/widgets/auction-detail/ui/auction-detail.component";
 import { AuctionTradingPanel } from "@/widgets/auction-trading-panel/ui/auction-trading-panel.component";
+import { NotFoundState } from "@/shared/ui/not-found-state/not-found-state.component";
 
 export function AuctionDetailPage() {
   const { auctionUuid } = useParams({ from: "/auctions/$auctionUuid" });
@@ -64,16 +65,10 @@ export function AuctionDetailPendingPage() {
 
 export function AuctionDetailNotFoundPage() {
   return (
-    <section
-      className="auction-detail-state auction-detail-state--missing"
-      aria-labelledby="auction-missing-title"
-    >
-      <p className="auction-detail__eyebrow">Аукцион · 404</p>
-      <h1 id="auction-missing-title">Аукцион не найден</h1>
-      <p>Он завершён, удалён или ссылка содержит неверный идентификатор.</p>
-      <Link className="auction-detail-state__link" to="/auctions">
-        Вернуться к аукционам
-      </Link>
-    </section>
+    <NotFoundState
+      description="Он завершён, удалён или ссылка содержит неверный идентификатор."
+      eyebrow="Аукцион / 404"
+      title="Аукцион не найден"
+    />
   );
 }

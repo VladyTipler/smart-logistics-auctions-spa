@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -15,6 +14,7 @@ import {
 import type { SetBetViewModel } from "@/features/set-bet/model/set-bet.vm";
 import { ApiError } from "@/shared/api/api-error";
 import { formatMoney } from "@/shared/lib/format-money";
+import { showAppToast } from "@/shared/ui/toast/app-toast-manager";
 
 type SetBetFormProps = {
   auction: SetBetViewModel;
@@ -34,7 +34,6 @@ export function SetBetForm({ auction }: SetBetFormProps) {
   const schema = createSetBetSchema(auction.constraints);
   const queryClient = useQueryClient();
   const mutation = useSetBetMutation(auction.auctionUuid);
-  const [acceptedPrice, setAcceptedPrice] = useState<number>();
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -64,33 +63,62 @@ export function SetBetForm({ auction }: SetBetFormProps) {
       return;
     }
 
-    setAcceptedPrice(undefined);
-
     try {
       await mutation.mutateAsync({ price });
-      setAcceptedPrice(price);
+      showAppToast({
+        description: `${formatMoney(
+          price,
+          auction.currencyCode,
+        )} синхронизирована с аукционом`,
+        id: `bet-success-${auction.auctionUuid}`,
+        title: "Ставка принята",
+        tone: "success",
+      });
     } catch (error) {
       if (error instanceof ApiError) {
         const message = fieldError(error);
 
         if (message) {
           setError("price", { message, type: "server" });
+          showAppToast({
+            description:
+              "Ставка не отправлена. Проверьте сообщение у поля и повторите.",
+            id: `bet-error-${auction.auctionUuid}`,
+            title: "Ошибка ставки",
+            tone: "error",
+          });
           return;
         }
 
+        const rootMessage =
+          error.status === 403
+            ? "Ставка больше недоступна. Обновите условия аукциона."
+            : error.message;
         setError("root.server", {
-          message:
-            error.status === 403
-              ? "Ставка больше недоступна. Обновите условия аукциона."
-              : error.message,
+          message: rootMessage,
           type: "server",
+        });
+        showAppToast({
+          description:
+            "Ставка не отправлена. Проверьте сообщение в форме и повторите.",
+          id: `bet-error-${auction.auctionUuid}`,
+          title: "Ошибка ставки",
+          tone: "error",
         });
         return;
       }
 
+      const rootMessage = "Не удалось отправить ставку. Попробуйте ещё раз.";
       setError("root.server", {
-        message: "Не удалось отправить ставку. Попробуйте ещё раз.",
+        message: rootMessage,
         type: "server",
+      });
+      showAppToast({
+        description:
+          "Ставка не отправлена. Проверьте сообщение в форме и повторите.",
+        id: `bet-error-${auction.auctionUuid}`,
+        title: "Ошибка ставки",
+        tone: "error",
       });
     }
   });
@@ -147,20 +175,6 @@ export function SetBetForm({ auction }: SetBetFormProps) {
           {isPending ? "Отправляем ставку…" : "Сделать ставку"}
         </button>
       </form>
-      {acceptedPrice === undefined ? null : (
-        <div
-          className="set-bet-toast"
-          role="status"
-          aria-label="Ставка принята"
-          aria-live="polite"
-        >
-          <strong>Ставка принята</strong>
-          <span>
-            {formatMoney(acceptedPrice, auction.currencyCode)} синхронизирована
-            с аукционом
-          </span>
-        </div>
-      )}
     </div>
   );
 }

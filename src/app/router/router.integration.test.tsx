@@ -32,7 +32,7 @@ describe("application routes", () => {
   it.each([
     ["/auctions", "Аукционы грузов"],
     [`/auctions/${auctionUuid}`, "Аукцион SL-1001"],
-    ["/auctions/auction-42/bets", "История ставок"],
+    [`/auctions/${auctionUuid}/bets`, "История ставок SL-1001"],
     ["/auctions/auction-42/bet", "Новая ставка"],
   ])("renders %s directly", async (initialUrl, heading) => {
     renderApp(initialUrl);

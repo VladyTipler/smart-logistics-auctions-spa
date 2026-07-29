@@ -10,15 +10,18 @@ export function shouldEnableMockApi(mode: string) {
 
 export default defineConfig(({ command, mode }) => {
   const enableMockApi = shouldEnableMockApi(mode);
+  const isDemo = mode === "demo";
 
   return {
+    ...(isDemo ? { base: "/smart-logistics-auctions-spa/" } : {}),
     define: {
       __ENABLE_MOCK_API__: JSON.stringify(enableMockApi),
     },
-    publicDir: command === "build" ? false : "public",
+    publicDir: command === "build" && !isDemo ? false : "public",
     plugins: [react(), tailwindcss()],
     build: {
       manifest: true,
+      ...(isDemo ? { outDir: "dist-demo" } : {}),
     },
     resolve: {
       alias: {

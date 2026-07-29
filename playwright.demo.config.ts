@@ -7,7 +7,7 @@ const repositoryBasePath = "/smart-logistics-auctions-spa/";
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: "test-results-demo",
+  outputDir: "test-results/demo",
   fullyParallel: false,
   forbidOnly: true,
   retries: 1,

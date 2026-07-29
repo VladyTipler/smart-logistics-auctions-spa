@@ -11,6 +11,7 @@ import {
 } from "@/pages/auction-bet/auction-bet-page.component";
 import { AuctionDetailNotFoundPage } from "@/pages/auction-detail/auction-detail-page.component";
 import { ApiError } from "@/shared/api/api-error";
+import { RouteErrorState } from "@/shared/ui/error-state/error-state.component";
 
 export const auctionBetRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -49,4 +50,5 @@ export const auctionBetRoute = createRoute({
   pendingComponent: AuctionBetPendingPage,
   pendingMs: 0,
   notFoundComponent: AuctionDetailNotFoundPage,
+  errorComponent: RouteErrorState,
 });

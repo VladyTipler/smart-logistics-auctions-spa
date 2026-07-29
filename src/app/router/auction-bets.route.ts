@@ -11,6 +11,7 @@ import {
 } from "@/pages/auction-bets/auction-bets-page.component";
 import { AuctionDetailNotFoundPage } from "@/pages/auction-detail/auction-detail-page.component";
 import { ApiError } from "@/shared/api/api-error";
+import { RouteErrorState } from "@/shared/ui/error-state/error-state.component";
 
 function usefulText(value: string | null | undefined) {
   const text = value?.trim();
@@ -62,4 +63,5 @@ export const auctionBetsRoute = createRoute({
   pendingComponent: AuctionBetsPendingPage,
   pendingMs: 0,
   notFoundComponent: AuctionDetailNotFoundPage,
+  errorComponent: RouteErrorState,
 });

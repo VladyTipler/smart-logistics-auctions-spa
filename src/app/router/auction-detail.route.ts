@@ -8,6 +8,7 @@ import {
 } from "@/pages/auction-detail/auction-detail-page.component";
 import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.queries";
 import { ApiError } from "@/shared/api/api-error";
+import { RouteErrorState } from "@/shared/ui/error-state/error-state.component";
 
 export const auctionDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -29,4 +30,5 @@ export const auctionDetailRoute = createRoute({
   pendingComponent: AuctionDetailPendingPage,
   pendingMs: 0,
   notFoundComponent: AuctionDetailNotFoundPage,
+  errorComponent: RouteErrorState,
 });

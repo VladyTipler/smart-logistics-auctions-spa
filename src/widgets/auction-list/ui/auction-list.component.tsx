@@ -7,8 +7,8 @@ import { AuctionPagination } from "@/features/auction-pagination/ui/auction-pagi
 import type { AuctionListRequest } from "@/shared/api/contracts";
 
 import { AuctionListEmpty } from "./auction-list-empty.component";
-import { AuctionListError } from "./auction-list-error.component";
 import { AuctionListSkeleton } from "./auction-list-skeleton.component";
+import { ErrorState } from "@/shared/ui/error-state/error-state.component";
 
 type AuctionListProps = {
   onReset: () => void;
@@ -23,7 +23,13 @@ export function AuctionList({ onReset, request }: AuctionListProps) {
   }
 
   if (query.isError) {
-    return <AuctionListError onRetry={() => void query.refetch()} />;
+    return (
+      <ErrorState
+        error={query.error}
+        onRetry={() => void query.refetch()}
+        scope="auction-list"
+      />
+    );
   }
 
   const cards = (query.data.data ?? []).map(mapAuctionCard);

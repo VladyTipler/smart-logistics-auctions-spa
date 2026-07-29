@@ -1,4 +1,5 @@
 import { createRuntimeConfig } from "@/shared/config/runtime-config";
+import { shouldEnableMockApi } from "../../../vite.config";
 
 describe("runtime config", () => {
   it("enables the mock API and hash history for the Pages demo", () => {
@@ -6,6 +7,8 @@ describe("runtime config", () => {
       createRuntimeConfig({
         mode: "demo",
         baseUrl: "/smart-logistics-auctions-spa/",
+        shouldStartWorker: true,
+        serviceWorkerFileName: "mockServiceWorker.js",
       }),
     ).toEqual({
       shouldStartWorker: true,
@@ -20,6 +23,8 @@ describe("runtime config", () => {
       createRuntimeConfig({
         mode: "development",
         baseUrl: "/",
+        shouldStartWorker: true,
+        serviceWorkerFileName: "mockServiceWorker.js",
       }),
     ).toEqual({
       shouldStartWorker: true,
@@ -33,11 +38,24 @@ describe("runtime config", () => {
       createRuntimeConfig({
         mode: "production",
         baseUrl: "/",
+        shouldStartWorker: false,
+        serviceWorkerFileName: "",
       }),
     ).toMatchObject({
       shouldStartWorker: false,
       serviceWorkerUrl: "",
       routerHistory: "browser",
     });
+  });
+
+  it.each([
+    ["development", true],
+    ["demo", true],
+    ["test", true],
+    ["production", false],
+    ["staging", false],
+    ["preview", false],
+  ])("sets the mock API compile flag for %s mode", (mode, expected) => {
+    expect(shouldEnableMockApi(mode)).toBe(expected);
   });
 });

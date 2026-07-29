@@ -42,9 +42,8 @@ const renderApplication = {
 };
 
 const startWorker =
-  import.meta.env.MODE === "production"
-    ? () => Promise.resolve()
-    : async () => {
+  __ENABLE_MOCK_API__
+    ? async () => {
         const { worker } = await import("@/shared/api/mocks/browser");
 
         await worker.start({
@@ -55,7 +54,8 @@ const startWorker =
             url: runtimeConfig.serviceWorkerUrl,
           },
         });
-      };
+      }
+    : () => Promise.resolve();
 
 void bootstrapApplication({
   ...renderApplication,

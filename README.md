@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Vite откроет приложение с локальным stateful API, который перехватывается MSW Service Worker. Старт React ожидает готовности worker, поэтому первый экран не соревнуется с mock-запросами.
+Vite запустит dev-server; приложение нужно открыть по URL из консоли. Локальный stateful API перехватывается MSW Service Worker. Старт React ожидает готовности worker, поэтому первый экран не соревнуется с mock-запросами.
 
 Основные команды:
 
@@ -76,7 +76,7 @@ shared    HTTP boundary, generated DTO, MSW, UI и test utilities
 
 MSW реализует реальные HTTP-сценарии `/api/v1`:
 
-- POST списка с обязательными фильтрами и пагинацией;
+- POST списка с поддерживаемыми фильтрами и пагинацией;
 - GET деталей по `main.order_uid`;
 - GET истории с `all=true`;
 - POST ставки с contract-shaped `403`, `404` и `422`;

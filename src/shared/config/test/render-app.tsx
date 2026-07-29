@@ -23,6 +23,7 @@ export function renderApp(initialUrl = "/auctions") {
   });
   const router = createAppRouter({
     history: createMemoryHistory({ initialEntries: [initialUrl] }),
+    queryClient,
   });
   const result = render(
     <AppProviders queryClient={queryClient} router={router} />,

@@ -2,7 +2,14 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { shouldRetryQuery } from "@/app/providers/query-client";
+import { server } from "@/shared/api/mocks/server";
 import { renderApp } from "@/shared/config/test/render-app";
+
+const auctionUuid = "11111111-1111-4111-8111-111111111111";
+
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe("application routes", () => {
   it.each([
@@ -24,7 +31,7 @@ describe("application routes", () => {
 
   it.each([
     ["/auctions", "Аукционы грузов"],
-    ["/auctions/auction-42", "Карточка аукциона"],
+    [`/auctions/${auctionUuid}`, "Аукцион SL-1001"],
     ["/auctions/auction-42/bets", "История ставок"],
     ["/auctions/auction-42/bet", "Новая ставка"],
   ])("renders %s directly", async (initialUrl, heading) => {
@@ -48,7 +55,7 @@ describe("application routes", () => {
 
   it("navigates through the SPA without losing QueryClient state", async () => {
     const user = userEvent.setup();
-    const { queryClient, router } = renderApp("/auctions/auction-42");
+    const { queryClient, router } = renderApp(`/auctions/${auctionUuid}`);
     const beforeUnload = vi.fn();
     window.addEventListener("beforeunload", beforeUnload);
     queryClient.setQueryData(["navigation-sentinel"], "preserved");
@@ -56,7 +63,7 @@ describe("application routes", () => {
     try {
       await screen.findByRole("heading", {
         level: 1,
-        name: "Карточка аукциона",
+        name: "Аукцион SL-1001",
       });
       await user.click(
         screen.getByRole("link", {
@@ -102,9 +109,9 @@ describe("application routes", () => {
   );
 
   it("exposes the dynamic auction route parameter", async () => {
-    renderApp("/auctions/auction-42");
+    renderApp(`/auctions/${auctionUuid}`);
 
-    expect(await screen.findByText("auction-42")).toBeInTheDocument();
+    expect(await screen.findByText(auctionUuid)).toBeInTheDocument();
   });
 });
 

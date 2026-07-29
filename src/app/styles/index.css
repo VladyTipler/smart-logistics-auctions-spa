@@ -854,6 +854,409 @@ a {
   outline-offset: 0.25rem;
 }
 
+.auction-detail {
+  width: 100%;
+}
+
+.auction-detail__header {
+  border-top: 3px solid var(--color-route-blue);
+  padding-top: 1rem;
+}
+
+.auction-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: rgb(21 35 45 / 64%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auction-detail__back:hover {
+  color: var(--color-route-blue);
+}
+
+.auction-detail__back:focus-visible,
+.trading-panel__action:focus-visible,
+.auction-detail-state__link:focus-visible {
+  border-radius: 0.2rem;
+  outline: 3px solid rgb(30 94 255 / 30%);
+  outline-offset: 3px;
+}
+
+.auction-detail__title-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-block: 2rem 1.75rem;
+}
+
+.auction-detail__eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--color-route-blue);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.auction-detail__eyebrow span {
+  color: rgb(21 35 45 / 55%);
+}
+
+.auction-detail__title-row h1,
+.auction-detail-state h1 {
+  margin: 0;
+  font: 700 clamp(2rem, 4vw, 3.4rem)/1 var(--font-display);
+  letter-spacing: -0.045em;
+}
+
+.auction-detail__title-row code {
+  max-width: 26rem;
+  overflow: hidden;
+  color: rgb(21 35 45 / 45%);
+  font: 0.68rem/1.3 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auction-detail__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 23rem);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  border-top: 1px solid var(--color-steel);
+}
+
+.auction-detail__content {
+  min-width: 0;
+}
+
+.detail-section {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 0.26fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  border-bottom: 1px solid var(--color-steel);
+  padding-block: clamp(1.75rem, 4vw, 3rem);
+}
+
+.detail-section__heading p {
+  margin: 0 0 0.45rem;
+  color: var(--color-route-blue);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-section__heading h2 {
+  margin: 0;
+  font: 700 1.1rem/1.25 var(--font-display);
+}
+
+.route-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-timeline__point {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 1rem;
+  padding-bottom: 2rem;
+}
+
+.route-timeline__point:not(:last-child)::before {
+  position: absolute;
+  top: 2rem;
+  bottom: 0;
+  left: calc(1.125rem - 0.5px);
+  width: 1px;
+  background: var(--color-route-blue);
+  content: "";
+}
+
+.route-timeline__point:last-child {
+  padding-bottom: 0;
+}
+
+.route-timeline__marker {
+  z-index: 1;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--color-route-blue);
+  background: var(--color-snow-field);
+  color: var(--color-route-blue);
+}
+
+.route-timeline__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  color: rgb(21 35 45 / 52%);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.route-timeline__heading time {
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+.route-timeline__body > strong {
+  display: block;
+  margin-top: 0.35rem;
+  font: 700 1.15rem/1.25 var(--font-display);
+}
+
+.route-timeline__body > p,
+.route-timeline__body address {
+  margin: 0.35rem 0 0;
+  color: rgb(21 35 45 / 66%);
+  font-size: 0.8rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.route-timeline__cargo {
+  color: var(--color-freight-ink) !important;
+}
+
+.detail-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 2rem;
+  margin: 0;
+}
+
+.detail-facts > div {
+  border-left: 2px solid var(--color-steel);
+  padding-left: 0.85rem;
+}
+
+.detail-facts dt {
+  color: rgb(21 35 45 / 52%);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.detail-facts dd {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.detail-empty,
+.detail-organizer__tax-id {
+  margin: 0;
+  color: rgb(21 35 45 / 58%);
+  font-size: 0.85rem;
+}
+
+.detail-organizer__contacts {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.7rem;
+  font-size: 0.85rem;
+  font-style: normal;
+}
+
+.trading-panel {
+  position: sticky;
+  top: 1.25rem;
+  margin-top: 2rem;
+  border-top: 3px solid var(--color-signal-orange);
+  padding: 1.25rem;
+  background: white;
+}
+
+.trading-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgb(21 35 45 / 64%);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.trading-panel__signal {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.trading-panel__signal--active {
+  border-color: var(--color-route-blue);
+  background: var(--color-route-blue);
+}
+
+.trading-panel__signal--positive {
+  border-color: var(--color-status-teal);
+  background: var(--color-status-teal);
+}
+
+.trading-panel__signal--warning {
+  border-color: var(--color-signal-orange);
+  background: var(--color-signal-orange);
+}
+
+.trading-panel__label {
+  margin: 1.4rem 0 0.35rem;
+  color: rgb(21 35 45 / 48%);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.trading-panel h2 {
+  margin: 0;
+  font: 700 clamp(1.65rem, 3vw, 2.3rem)/1 var(--font-mono);
+  letter-spacing: -0.05em;
+}
+
+.trading-panel__available,
+.trading-panel__time,
+.trading-panel__own-bid,
+.trading-panel__step {
+  margin: 0.8rem 0 0;
+  color: rgb(21 35 45 / 62%);
+  font-size: 0.76rem;
+}
+
+.trading-panel__time {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.trading-panel__action {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.35rem;
+  padding-inline: 1rem;
+  background: var(--color-signal-orange);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.trading-panel__unavailable {
+  margin: 1.35rem 0 0;
+  border-left: 2px solid var(--color-steel);
+  padding-left: 0.75rem;
+  color: rgb(21 35 45 / 55%);
+  font-size: 0.8rem;
+}
+
+.trading-panel__own-bid {
+  border-top: 1px solid var(--color-steel);
+  padding-top: 0.8rem;
+}
+
+.auction-detail-state {
+  max-width: 47rem;
+  border-top: 3px solid var(--color-route-blue);
+  padding-top: 1.5rem;
+}
+
+.auction-detail-state--missing {
+  border-top-color: var(--color-signal-orange);
+}
+
+.auction-detail-state > p:not(.auction-detail__eyebrow) {
+  margin: 1rem 0 0;
+  color: rgb(21 35 45 / 66%);
+}
+
+.auction-detail-state__line {
+  width: min(100%, 30rem);
+  height: 2px;
+  margin-top: 2rem;
+  background: var(--color-route-blue);
+  animation: detail-load 1s ease-in-out infinite alternate;
+}
+
+.auction-detail-state__link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--color-route-blue);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+@keyframes detail-load {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 64rem) {
+  .auction-detail__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+    gap: 2rem;
+  }
+
+  .detail-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  .auction-detail__title-row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .auction-detail__title-row code {
+    max-width: 100%;
+  }
+
+  .auction-detail__layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .trading-panel {
+    position: static;
+    order: -1;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .auction-detail__content {
+    width: 100%;
+  }
+}
+
+@media (max-width: 30rem) {
+  .detail-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 40rem) {
   .app-header {
     min-height: 4rem;

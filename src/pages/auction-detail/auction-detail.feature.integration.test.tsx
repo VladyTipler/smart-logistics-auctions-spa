@@ -1,0 +1,102 @@
+import { HttpResponse, delay, http } from "msw";
+import { screen, waitForElementToBeRemoved } from "@testing-library/react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+} from "vitest";
+
+import { server } from "@/shared/api/mocks/server";
+import { auctionFixtures } from "@/shared/api/mocks/fixtures/auctions.fixture";
+import { renderApp } from "@/shared/config/test/render-app";
+import { auctionKeys } from "@/entities/auction/api/auction.queries";
+
+const auctionUuid = "11111111-1111-4111-8111-111111111111";
+
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+describe("auction detail feature", () => {
+  it("loads a direct detail URL through the router and stateful MSW backend", async () => {
+    let detailRequests = 0;
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid", async () => {
+        detailRequests += 1;
+        await delay(80);
+        return HttpResponse.json(auctionFixtures[0].detail);
+      }),
+    );
+
+    const { queryClient, router } = renderApp(`/auctions/${auctionUuid}`);
+
+    expect(
+      await screen.findByText("Загружаем условия перевозки…"),
+    ).toBeInTheDocument();
+    await waitForElementToBeRemoved(
+      screen.getByText("Загружаем условия перевозки…"),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Аукцион SL-1001" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Кишинёв")).toBeInTheDocument();
+    expect(screen.getByText("Бухарест")).toBeInTheDocument();
+    expect(screen.getByText("32 000 ₽")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Сделать ставку" }),
+    ).toHaveAttribute(
+      "href",
+      `/auctions/${auctionUuid}/bet`,
+    );
+    expect(queryClient.getQueryData(auctionKeys.detail(auctionUuid))).toEqual(
+      auctionFixtures[0].detail,
+    );
+    expect(router.options.context.queryClient).toBe(queryClient);
+    expect(detailRequests).toBe(1);
+  });
+
+  it("renders the auction not-found state for an unknown direct link", async () => {
+    renderApp("/auctions/99999999-9999-4999-8999-999999999999");
+
+    expect(
+      await screen.findByRole("heading", { name: "Аукцион не найден" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Вернуться к аукционам" }),
+    ).toHaveAttribute("href", "/auctions");
+  });
+
+  it("never renders fields removed by the access policy", async () => {
+    const restricted = structuredClone(auctionFixtures[0].detail);
+    restricted.trading.hide_points_address_and_contacts = true;
+    restricted.trading.no_view_cargo_price = true;
+    restricted.trading.can_set_bet = false;
+    restricted.contacts = [
+      { name: "Скрытый организатор", phone: "+37360000111" },
+    ];
+
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid", () =>
+        HttpResponse.json(restricted),
+      ),
+    );
+
+    renderApp(`/auctions/${auctionUuid}`);
+
+    expect(await screen.findByText("Кишинёв")).toBeInTheDocument();
+    expect(screen.getByText("Бухарест")).toBeInTheDocument();
+    expect(screen.queryByText("Кишинёв, Складская 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Иван")).not.toBeInTheDocument();
+    expect(screen.queryByText("Скрытый организатор")).not.toBeInTheDocument();
+    expect(screen.queryByText("150 000 ₽")).not.toBeInTheDocument();
+    expect(screen.getByText("32 000 ₽")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Сделать ставку" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Ставка сейчас недоступна")).toBeInTheDocument();
+  });
+});

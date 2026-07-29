@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { auctionSearchSchema } from "./auction-search.schema";
 import { buildAuctionListRequest } from "./build-auction-list-request";
+
+vi.stubEnv("TZ", "Europe/Chisinau");
 
 describe("buildAuctionListRequest", () => {
   it("maps normalized URL state to the generated API contract", () => {
@@ -36,27 +38,35 @@ describe("buildAuctionListRequest", () => {
     });
   });
 
-  it("converts date-only filters to local offset day boundaries", () => {
+  it("uses exact winter and summer offsets for all date filters", () => {
     const search = auctionSearchSchema.parse({
-      loadDateFrom: "2026-05-26",
-      loadDateTo: "2026-05-27",
+      loadDateFrom: "2026-01-15",
+      loadDateTo: "2026-01-16",
+      unloadDateFrom: "2026-05-26",
+      unloadDateTo: "2026-05-27",
       createDateFrom: "2026-06-01",
       createDateTo: "2026-06-02",
     });
 
     expect(buildAuctionListRequest(search)).toMatchObject({
-      load_date_from: expect.stringMatching(
-        /^2026-05-26T00:00:00[+-]\d{2}:\d{2}$/,
-      ),
-      load_date_to: expect.stringMatching(
-        /^2026-05-27T23:59:59\.999[+-]\d{2}:\d{2}$/,
-      ),
-      create_date_from: expect.stringMatching(
-        /^2026-06-01T00:00:00[+-]\d{2}:\d{2}$/,
-      ),
-      create_date_to: expect.stringMatching(
-        /^2026-06-02T23:59:59\.999[+-]\d{2}:\d{2}$/,
-      ),
+      load_date_from: "2026-01-15T00:00:00+02:00",
+      load_date_to: "2026-01-16T23:59:59.999+02:00",
+      unload_date_from: "2026-05-26T00:00:00+03:00",
+      unload_date_to: "2026-05-27T23:59:59.999+03:00",
+      create_date_from: "2026-06-01T00:00:00+03:00",
+      create_date_to: "2026-06-02T23:59:59.999+03:00",
+    });
+  });
+
+  it("uses the offset active at each boundary on a DST transition day", () => {
+    const search = auctionSearchSchema.parse({
+      loadDateFrom: "2026-03-29",
+      loadDateTo: "2026-03-29",
+    });
+
+    expect(buildAuctionListRequest(search)).toMatchObject({
+      load_date_from: "2026-03-29T00:00:00+02:00",
+      load_date_to: "2026-03-29T23:59:59.999+03:00",
     });
   });
 

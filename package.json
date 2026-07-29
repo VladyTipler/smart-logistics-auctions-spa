@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:demo": "npm run build:demo && playwright test --config=playwright.demo.config.ts",
     "api:generate": "openapi-typescript ./openapi.auctions.v0.json -o ./src/shared/api/generated/auctions-api.ts"
   },
   "dependencies": {

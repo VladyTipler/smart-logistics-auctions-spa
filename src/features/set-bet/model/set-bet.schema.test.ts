@@ -84,6 +84,31 @@ describe("createSetBetSchema", () => {
     );
   });
 
+  it("rejects a decimal that Number would silently round", () => {
+    const result = createSetBetSchema({ direction: "Request" }).safeParse({
+      price: "9007199254.740991",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      "Сумма не может быть передана без потери точности",
+    );
+  });
+
+  it.each([
+    ["9007199254.740988", 9007199254.740988],
+    ["900719925.474099", 900719925.474099],
+    ["0001.2300", 1.23],
+    [" 0001,2300 ", 1.23],
+  ])(
+    "preserves the canonical decimal value for %j",
+    (price, expected) => {
+      expect(
+        createSetBetSchema({ direction: "Request" }).parse({ price }),
+      ).toEqual({ price: expected });
+    },
+  );
+
   it("keeps exact step validation for supported fractional money", () => {
     const schema = createSetBetSchema({
       available: 0.1,

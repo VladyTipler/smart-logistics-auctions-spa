@@ -14,11 +14,22 @@ export type SetBetConstraints = {
 
 type ParsedMoney =
   | { kind: "invalid" }
+  | { kind: "lossy" }
   | { kind: "precision" }
   | { kind: "valid"; normalized: string; value: number };
 
 const plainDecimalPattern = /^\d+(?:[.,]\d+)?$/;
 const maximumMoneyCoefficient = BigInt(Number.MAX_SAFE_INTEGER);
+
+function canonicalDecimal(value: string): string {
+  const [rawInteger, rawFraction = ""] = value
+    .replace(",", ".")
+    .split(".");
+  const integer = rawInteger.replace(/^0+(?=\d)/, "");
+  const fraction = rawFraction.replace(/0+$/, "");
+
+  return fraction ? `${integer}.${fraction}` : integer;
+}
 
 function parseMoneyInput(input: string): ParsedMoney {
   const trimmed = input.trim();
@@ -47,10 +58,16 @@ function parseMoneyInput(input: string): ParsedMoney {
     return { kind: "precision" };
   }
 
+  const value = Number(normalized);
+
+  if (canonicalDecimal(value.toString()) !== canonicalDecimal(normalized)) {
+    return { kind: "lossy" };
+  }
+
   return {
     kind: "valid",
     normalized,
-    value: Number(normalized),
+    value,
   };
 }
 
@@ -95,6 +112,15 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
         context.addIssue({
           code: "custom",
           message: "Сумма содержит слишком много разрядов",
+          path: ["price"],
+        });
+        return;
+      }
+
+      if (money.kind === "lossy") {
+        context.addIssue({
+          code: "custom",
+          message: "Сумма не может быть передана без потери точности",
           path: ["price"],
         });
         return;

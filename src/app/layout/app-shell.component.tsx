@@ -3,8 +3,16 @@ import { Link, Outlet } from "@tanstack/react-router";
 export function AppShell() {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        К содержимому
+      </a>
       <header className="app-header">
-        <Link className="brand" to="/auctions" aria-label="Умная Логистика">
+        <Link
+          className="brand"
+          to="/auctions"
+          activeOptions={{ exact: true }}
+          aria-label="Умная Логистика"
+        >
           <span className="brand__mark" aria-hidden="true">
             УЛ
           </span>

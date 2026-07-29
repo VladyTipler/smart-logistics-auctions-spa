@@ -40,6 +40,31 @@ a {
   color: inherit;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-freight-ink);
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+}
+
+.skip-link:focus {
+  outline: 3px solid var(--color-route-blue);
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
+:where(a, button, input, [role="button"]):focus-visible {
+  outline: 3px solid var(--color-route-blue);
+  outline-offset: 3px;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -56,6 +81,7 @@ a {
 
 .brand {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
@@ -63,7 +89,7 @@ a {
 
 .brand:focus-visible {
   border-radius: 0.25rem;
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -129,7 +155,7 @@ a {
 .app-navigation__link:focus-visible,
 .route-page__link:focus-visible {
   border-radius: 0.25rem;
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -252,7 +278,7 @@ a {
 .auction-pagination__link:focus-visible,
 .mobile-filters__trigger:focus-visible,
 .auction-list-state button:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 30%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 2px;
 }
 
@@ -267,7 +293,7 @@ a {
 }
 
 .filter-field__control input::placeholder {
-  color: rgb(21 35 45 / 42%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .select-trigger {
@@ -292,19 +318,19 @@ a {
 }
 
 .combobox-input::placeholder {
-  color: rgb(21 35 45 / 42%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .combobox-clear,
 .combobox-trigger {
   display: grid;
-  width: 1.75rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   flex: 0 0 auto;
   place-items: center;
   border: 0;
   background: transparent;
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .combobox-clear[data-disabled],
@@ -323,7 +349,7 @@ a {
 
 .combobox-empty {
   padding: 0.75rem;
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.8rem;
 }
 
@@ -342,7 +368,7 @@ a {
 
 .select-item {
   display: flex;
-  min-height: 2.25rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -356,6 +382,8 @@ a {
 .select-item[data-highlighted] {
   background: rgb(30 94 255 / 8%);
   color: var(--color-route-blue);
+  outline: 2px solid var(--color-route-blue);
+  outline-offset: -2px;
 }
 
 .filter-submit,
@@ -423,8 +451,8 @@ a {
 
 .filter-drawer__close {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
   border: 0;
   background: transparent;
@@ -472,7 +500,7 @@ a {
 
 .auction-card__type,
 .auction-card__price-label {
-  color: rgb(21 35 45 / 56%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.675rem;
   font-weight: 600;
   letter-spacing: 0.075em;
@@ -542,7 +570,7 @@ a {
 }
 
 .route-rail__point small {
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font-family: var(--font-mono);
   font-size: 0.675rem;
 }
@@ -604,11 +632,11 @@ a {
 .auction-card__action--bid {
   border-color: var(--color-signal-orange);
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
 }
 
 .auction-card__action--disabled {
-  color: rgb(21 35 45 / 45%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .auction-pagination {
@@ -622,7 +650,7 @@ a {
   margin: 0;
   border-top: 1px solid var(--color-steel);
   padding-block: 0.8rem;
-  color: rgb(21 35 45 / 62%);
+  color: rgb(21 35 45 / 64%);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.045em;
@@ -632,8 +660,8 @@ a {
 
 .auction-pagination__link {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
   border: 1px solid var(--color-steel);
   border-radius: 0.18rem;
@@ -648,7 +676,7 @@ a {
   width: 1.75rem;
   height: 2.5rem;
   place-items: center;
-  color: rgb(21 35 45 / 55%);
+  color: rgb(21 35 45 / 64%);
   font-family: var(--font-mono);
 }
 
@@ -850,7 +878,7 @@ a {
 }
 
 .startup-error button:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 0.25rem;
 }
 
@@ -865,6 +893,7 @@ a {
 
 .auction-detail__back {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.3rem;
   color: rgb(21 35 45 / 64%);
@@ -881,7 +910,7 @@ a {
 .trading-panel__action:focus-visible,
 .auction-detail-state__link:focus-visible {
   border-radius: 0.2rem;
-  outline: 3px solid rgb(30 94 255 / 30%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
@@ -904,7 +933,7 @@ a {
 }
 
 .auction-detail__eyebrow span {
-  color: rgb(21 35 45 / 55%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .auction-detail__title-row h1,
@@ -917,7 +946,7 @@ a {
 .auction-detail__title-row code {
   max-width: 26rem;
   overflow: hidden;
-  color: rgb(21 35 45 / 45%);
+  color: rgb(21 35 45 / 64%);
   font: 0.68rem/1.3 var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1005,7 +1034,7 @@ a {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.4rem 1rem;
-  color: rgb(21 35 45 / 52%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.055em;
@@ -1049,7 +1078,7 @@ a {
 }
 
 .detail-facts dt {
-  color: rgb(21 35 45 / 52%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.045em;
@@ -1065,7 +1094,7 @@ a {
 .detail-empty,
 .detail-organizer__tax-id {
   margin: 0;
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.85rem;
 }
 
@@ -1119,7 +1148,7 @@ a {
 
 .trading-panel__label {
   margin: 1.4rem 0 0.35rem;
-  color: rgb(21 35 45 / 48%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.07em;
@@ -1138,8 +1167,23 @@ a {
 .trading-panel__step,
 .trading-panel__bounds {
   margin: 0.8rem 0 0;
-  color: rgb(21 35 45 / 62%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.76rem;
+}
+
+.trading-panel__history {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-steel);
+  padding-top: 0.85rem;
+  color: var(--color-route-blue);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .trading-panel__time {
@@ -1162,7 +1206,7 @@ a {
   margin-top: 1.35rem;
   padding-inline: 1rem;
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
@@ -1172,7 +1216,7 @@ a {
   margin: 1.35rem 0 0;
   border-left: 2px solid var(--color-steel);
   padding-left: 0.75rem;
-  color: rgb(21 35 45 / 55%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.8rem;
 }
 
@@ -1381,7 +1425,7 @@ a {
 
 .bet-table th {
   padding: 0.9rem 0.8rem;
-  color: rgb(21 35 45 / 52%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.065em;
@@ -1407,7 +1451,7 @@ a {
 }
 
 .bet-table time {
-  color: rgb(21 35 45 / 62%);
+  color: rgb(21 35 45 / 64%);
   font: 0.72rem/1.35 var(--font-mono);
   white-space: nowrap;
 }
@@ -1423,7 +1467,7 @@ a {
 
 .bet-table td > small {
   margin-top: 0.3rem;
-  color: rgb(21 35 45 / 56%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.7rem;
   line-height: 1.35;
 }
@@ -1440,7 +1484,7 @@ a {
 }
 
 .bet-table__price--secondary {
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font-weight: 400;
 }
 
@@ -1519,7 +1563,7 @@ a {
 
 .bet-card__heading small {
   margin-top: 0.25rem;
-  color: rgb(21 35 45 / 56%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.72rem;
 }
 
@@ -1532,7 +1576,7 @@ a {
 }
 
 .bet-card__price span {
-  color: rgb(21 35 45 / 52%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -1548,7 +1592,7 @@ a {
   flex-wrap: wrap;
   gap: 0.4rem 1rem;
   margin-top: 0.8rem;
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font: 0.68rem/1.4 var(--font-mono);
 }
 
@@ -1690,7 +1734,7 @@ a {
 }
 
 .set-bet-page__conditions dt {
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.75rem;
 }
 
@@ -1719,7 +1763,7 @@ a {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgb(21 35 45 / 62%);
+  color: rgb(21 35 45 / 64%);
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -1752,7 +1796,8 @@ a {
 
 .set-bet-form__input:focus-within {
   border-color: var(--color-route-blue);
-  outline: 3px solid rgb(30 94 255 / 16%);
+  outline: 3px solid var(--color-route-blue);
+  outline-offset: 2px;
 }
 
 .set-bet-form__input:has(input[aria-invalid="true"]) {
@@ -1772,7 +1817,7 @@ a {
 
 .set-bet-form__input > span {
   padding-right: 0.95rem;
-  color: rgb(21 35 45 / 52%);
+  color: rgb(21 35 45 / 64%);
   font: 600 0.9rem/1 var(--font-mono);
 }
 
@@ -1784,7 +1829,7 @@ a {
 }
 
 .set-bet-form__hint {
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
 }
 
 .set-bet-form__error {
@@ -1797,24 +1842,27 @@ a {
   margin-top: 1.35rem;
   border: 0;
   background: var(--color-signal-orange);
-  color: white;
+  color: var(--color-freight-ink);
   font: 700 0.9rem/1 var(--font-sans);
   cursor: pointer;
 }
 
-.set-bet-form button:hover:not(:disabled) {
-  background: #d9571c;
+.auction-card__action--bid:hover,
+.trading-panel__action:hover,
+.set-bet-form button:hover:not(:disabled),
+.recovery-state--error .recovery-state__action:hover {
+  background: var(--color-signal-orange);
+  box-shadow: inset 0 0 0 2px var(--color-freight-ink);
 }
 
 .set-bet-form button:focus-visible,
 .set-bet-unavailable__link:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
 .set-bet-form button:disabled {
   cursor: wait;
-  opacity: 0.65;
 }
 
 .set-bet-toast {
@@ -2007,11 +2055,12 @@ a {
 .recovery-state--error .recovery-state__action {
   border-color: var(--color-signal-orange);
   background: var(--color-signal-orange);
+  color: var(--color-freight-ink);
 }
 
 .recovery-state__action:focus-visible,
 .app-toast__close:focus-visible {
-  outline: 3px solid rgb(30 94 255 / 35%);
+  outline: 3px solid var(--color-route-blue);
   outline-offset: 3px;
 }
 
@@ -2069,12 +2118,12 @@ a {
 
 .app-toast__close {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
   border: 0;
   background: transparent;
-  color: rgb(21 35 45 / 58%);
+  color: rgb(21 35 45 / 64%);
   cursor: pointer;
 }
 

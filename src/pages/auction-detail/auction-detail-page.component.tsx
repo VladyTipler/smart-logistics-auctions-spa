@@ -23,7 +23,11 @@ export function AuctionDetailPage() {
       aria-labelledby="auction-detail-title"
     >
       <header className="auction-detail__header">
-        <Link className="auction-detail__back" to="/auctions">
+        <Link
+          className="auction-detail__back"
+          to="/auctions"
+          activeOptions={{ exact: true }}
+        >
           <ChevronLeft size={16} aria-hidden="true" />
           Все аукционы
         </Link>

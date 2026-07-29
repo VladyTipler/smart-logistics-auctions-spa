@@ -101,6 +101,16 @@ export function AuctionTradingPanel({
             : formatMoney(trading.maxPrice, trading.currencyCode)}
         </p>
       ) : null}
+      {access.canViewBetHistory && auctionUuid ? (
+        <Link
+          className="trading-panel__history"
+          to="/auctions/$auctionUuid/bets"
+          params={{ auctionUuid }}
+        >
+          Протокол торгов
+          <ArrowRight size={16} aria-hidden="true" />
+        </Link>
+      ) : null}
     </aside>
   );
 }

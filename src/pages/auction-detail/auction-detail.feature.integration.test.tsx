@@ -47,6 +47,9 @@ describe("auction detail feature", () => {
     expect(
       screen.getByRole("heading", { name: "Аукцион SL-1001" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Все аукционы" })).not.toHaveAttribute(
+      "aria-current",
+    );
     expect(screen.getByText("Кишинёв")).toBeInTheDocument();
     expect(screen.getByText("Бухарест")).toBeInTheDocument();
     expect(
@@ -58,6 +61,9 @@ describe("auction detail feature", () => {
       "href",
       `/auctions/${auctionUuid}/bet`,
     );
+    expect(
+      screen.getByRole("link", { name: "Протокол торгов" }),
+    ).toHaveAttribute("href", `/auctions/${auctionUuid}/bets`);
     expect(queryClient.getQueryData(auctionKeys.detail(auctionUuid))).toEqual(
       auctionFixtures[0].detail,
     );
@@ -139,6 +145,29 @@ describe("auction detail feature", () => {
     expect(
       screen.queryByRole("link", { name: "Сделать ставку" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Протокол торгов" }),
+    ).toHaveAttribute("href", `/auctions/${auctionUuid}/bets`);
     expect(screen.getByText("Ставка сейчас недоступна")).toBeInTheDocument();
+  });
+
+  it("does not expose the history route when history is guarded", async () => {
+    const restricted = structuredClone(auctionFixtures[0].detail);
+    restricted.hide_bets_history = true;
+
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid", () =>
+        HttpResponse.json(restricted),
+      ),
+    );
+
+    renderApp(`/auctions/${auctionUuid}`);
+
+    expect(
+      await screen.findByRole("heading", { name: "Аукцион SL-1001" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Протокол торгов" }),
+    ).not.toBeInTheDocument();
   });
 });

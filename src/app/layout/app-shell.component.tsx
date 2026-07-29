@@ -1,15 +1,10 @@
-import { Outlet } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Link, Outlet } from "@tanstack/react-router";
 
-type AppShellProps = {
-  children: ReactNode;
-};
-
-export function AppShell({ children }: AppShellProps) {
+export function AppShell() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <a className="brand" href="/auctions" aria-label="Умная Логистика">
+        <Link className="brand" to="/auctions" aria-label="Умная Логистика">
           <span className="brand__mark" aria-hidden="true">
             УЛ
           </span>
@@ -17,22 +12,24 @@ export function AppShell({ children }: AppShellProps) {
             <span className="brand__name">Умная Логистика</span>
             <span className="brand__descriptor">Диспетчерская перевозчика</span>
           </span>
-        </a>
+        </Link>
 
         <nav className="app-navigation" aria-label="Основная навигация">
-          <a className="app-navigation__link" href="/auctions">
+          <Link
+            className="app-navigation__link"
+            to="/auctions"
+            activeOptions={{ exact: false }}
+            activeProps={{ "aria-current": "page" }}
+            resetScroll={false}
+          >
             Аукционы
-          </a>
+          </Link>
         </nav>
       </header>
 
       <main className="app-main" id="main-content">
-        {children}
+        <Outlet />
       </main>
     </div>
   );
-}
-
-export function RouteOutlet() {
-  return <Outlet />;
 }

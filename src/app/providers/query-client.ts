@@ -25,7 +25,7 @@ export function shouldRetryQuery(failureCount: number, error: unknown) {
     return status === 503 && failureCount < 1;
   }
 
-  return failureCount < 1;
+  return error instanceof TypeError && failureCount < 1;
 }
 
 export function createAppQueryClient() {

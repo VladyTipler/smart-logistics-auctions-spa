@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
-import { AppShell } from "@/app/layout/app-shell.component";
 import {
   appRouter,
   type AppRouter,
@@ -19,9 +18,7 @@ export function AppProviders({
 }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <RouterProvider router={router} />
-      </AppShell>
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
 }

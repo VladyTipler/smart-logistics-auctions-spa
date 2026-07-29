@@ -5,6 +5,12 @@ import { render } from "@testing-library/react";
 import { AppProviders } from "@/app/providers/app-providers.component";
 import { createAppRouter } from "@/app/router/router";
 
+const originalScrollTo = window.scrollTo;
+
+afterEach(() => {
+  window.scrollTo = originalScrollTo;
+});
+
 export function renderApp(initialUrl = "/auctions") {
   window.scrollTo = () => undefined;
 

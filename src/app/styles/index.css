@@ -112,7 +112,11 @@ a {
   text-decoration: none;
 }
 
-.app-navigation__link::after {
+.app-navigation__link[aria-current="page"] {
+  color: var(--color-freight-ink);
+}
+
+.app-navigation__link[aria-current="page"]::after {
   position: absolute;
   right: 0;
   bottom: -1px;

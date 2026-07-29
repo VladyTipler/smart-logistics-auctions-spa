@@ -9,30 +9,42 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "@/app/app.component";
+import {
+  bootstrapApplication,
+  createUnhandledRequestPolicy,
+} from "@/app/bootstrap";
+import { StartupError } from "@/app/startup-error.component";
 
-async function enableMocking() {
-  if (!import.meta.env.DEV) {
-    return;
-  }
+const rootElement = document.querySelector("#root");
 
-  const { setupWorker } = await import("msw/browser");
-  await setupWorker().start({ onUnhandledRequest: "bypass" });
+if (!rootElement) {
+  throw new Error("Application root element was not found");
 }
 
-async function bootstrap() {
-  await enableMocking();
+const root = createRoot(rootElement);
 
-  const rootElement = document.querySelector("#root");
+void bootstrapApplication({
+  isDevelopment: import.meta.env.DEV,
+  startWorker: async () => {
+    const { setupWorker } = await import("msw/browser");
+    const worker = setupWorker();
 
-  if (!rootElement) {
-    throw new Error("Application root element was not found");
-  }
-
-  createRoot(rootElement).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-}
-
-void bootstrap();
+    await worker.start({
+      onUnhandledRequest: createUnhandledRequestPolicy(window.location.origin),
+    });
+  },
+  renderApp: () => {
+    root.render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  },
+  renderStartupError: () => {
+    root.render(
+      <StrictMode>
+        <StartupError />
+      </StrictMode>,
+    );
+  },
+});

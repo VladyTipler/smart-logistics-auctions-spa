@@ -46,12 +46,12 @@ a {
 
 .app-header {
   display: flex;
-  min-height: 4.5rem;
+  min-height: 4.75rem;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--color-steel);
-  padding: 0 3rem;
-  background: rgb(255 255 255 / 78%);
+  padding: 0 clamp(1.25rem, 4vw, 3rem);
+  background: rgb(255 255 255 / 84%);
 }
 
 .brand {
@@ -81,27 +81,67 @@ a {
 }
 
 .brand__name {
+  display: block;
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
 }
 
-.app-header__context {
+.brand__descriptor {
+  display: block;
+  margin-top: 0.125rem;
+  color: rgb(21 35 45 / 68%);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.app-navigation {
+  align-self: stretch;
+}
+
+.app-navigation__link {
+  position: relative;
+  display: flex;
+  height: 100%;
+  align-items: center;
   color: rgb(21 35 45 / 68%);
   font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-navigation__link::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--color-route-blue);
+  content: "";
+}
+
+.app-navigation__link:focus-visible,
+.route-page__link:focus-visible {
+  border-radius: 0.25rem;
+  outline: 3px solid rgb(30 94 255 / 35%);
+  outline-offset: 0.25rem;
 }
 
 .app-main {
   width: min(100% - 6rem, 90rem);
   margin-inline: auto;
-  padding-block: clamp(3.5rem, 9vw, 8rem);
+  padding-block: clamp(2.75rem, 6vw, 5.5rem);
 }
 
-.dispatch-intro {
-  max-width: 47rem;
+.route-page {
+  max-width: 54rem;
+  border-top: 3px solid var(--color-route-blue);
+  padding-top: clamp(1.5rem, 3vw, 2.5rem);
 }
 
-.dispatch-intro__eyebrow {
+.route-page__eyebrow {
   margin: 0 0 0.875rem;
   color: var(--color-route-blue);
   font-family: var(--font-mono);
@@ -111,46 +151,28 @@ a {
   text-transform: uppercase;
 }
 
-.dispatch-intro h1 {
+.route-page h1 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2.25rem, 6vw, 4.75rem);
+  font-size: clamp(2rem, 5vw, 3.75rem);
   font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 0.98;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
-.dispatch-intro__description {
+.route-page__description {
   max-width: 34rem;
-  margin: 1.5rem 0 0;
+  margin: 1.25rem 0 0;
   color: rgb(21 35 45 / 72%);
-  font-size: clamp(1rem, 2vw, 1.125rem);
   line-height: 1.6;
 }
 
-.route-line {
-  display: grid;
-  grid-template-columns: auto minmax(5rem, 1fr) auto;
-  max-width: 30rem;
-  align-items: center;
-  margin-top: 3rem;
-}
-
-.route-line__point {
-  width: 0.75rem;
-  height: 0.75rem;
-  border: 3px solid var(--color-route-blue);
-  border-radius: 50%;
-  background: var(--color-snow-field);
-}
-
-.route-line__point--destination {
-  border-color: var(--color-signal-orange);
-}
-
-.route-line__track {
-  height: 2px;
-  background: var(--color-route-blue);
+.route-page__link {
+  display: inline-block;
+  margin-top: 1.75rem;
+  color: var(--color-route-blue);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
 }
 
 .startup-error {
@@ -195,6 +217,10 @@ a {
   }
 
   .brand__name {
+    display: none;
+  }
+
+  .brand__descriptor {
     display: none;
   }
 

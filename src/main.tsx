@@ -23,16 +23,7 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
-void bootstrapApplication({
-  isDevelopment: import.meta.env.DEV,
-  startWorker: async () => {
-    const { setupWorker } = await import("msw/browser");
-    const worker = setupWorker();
-
-    await worker.start({
-      onUnhandledRequest: createUnhandledRequestPolicy(window.location.origin),
-    });
-  },
+const renderApplication = {
   renderApp: () => {
     root.render(
       <StrictMode>
@@ -47,4 +38,27 @@ void bootstrapApplication({
       </StrictMode>,
     );
   },
-});
+};
+
+if (import.meta.env.DEV) {
+  void bootstrapApplication({
+    ...renderApplication,
+    isDevelopment: true,
+    startWorker: async () => {
+      const { setupWorker } = await import("msw/browser");
+      const worker = setupWorker();
+
+      await worker.start({
+        onUnhandledRequest: createUnhandledRequestPolicy(
+          window.location.origin,
+        ),
+      });
+    },
+  });
+} else {
+  void bootstrapApplication({
+    ...renderApplication,
+    isDevelopment: false,
+    startWorker: () => Promise.resolve(),
+  });
+}

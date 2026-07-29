@@ -1,7 +1,9 @@
 import { ChevronLeft } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useLoaderData } from "@tanstack/react-router";
 
-import type { BetHistoryViewModel } from "@/entities/bet/model/bet-history.vm";
+import { auctionBetHistoryQueryOptions } from "@/entities/bet/api/bet.queries";
+import { mapBetHistory } from "@/entities/bet/model/map-bet-history";
 import { BetHistory } from "@/widgets/bet-history/ui/bet-history.component";
 import { BetHistoryHidden } from "@/widgets/bet-history/ui/bet-history-hidden.component";
 
@@ -14,9 +16,39 @@ export type AuctionBetsLoaderData = {
     }
   | {
       visibility: "visible";
-      history: BetHistoryViewModel;
+      canViewPlaces: boolean;
+      currencyCode?: string;
     }
 );
+
+type VisibleBetHistoryProps = {
+  auctionUuid: string;
+  canViewPlaces: boolean;
+  currencyCode?: string;
+};
+
+function VisibleBetHistory({
+  auctionUuid,
+  canViewPlaces,
+  currencyCode,
+}: VisibleBetHistoryProps) {
+  const { data } = useSuspenseQuery(
+    auctionBetHistoryQueryOptions(auctionUuid),
+  );
+  const history = mapBetHistory(data, {
+    canViewPlaces,
+    ...(currencyCode ? { currencyCode } : {}),
+  });
+
+  return (
+    <>
+      <p className="bet-history-page__participants">
+        {history.participantCountLabel}
+      </p>
+      <BetHistory history={history} />
+    </>
+  );
+}
 
 export function AuctionBetsPage() {
   const data = useLoaderData({ from: "/auctions/$auctionUuid/bets" });
@@ -39,18 +71,19 @@ export function AuctionBetsPage() {
               История ставок {data.cargoNumber}
             </h1>
           </div>
-          {data.visibility === "visible" ? (
-            <p className="bet-history-page__participants">
-              {data.history.participantCountLabel}
-            </p>
-          ) : null}
         </div>
       </header>
 
       {data.visibility === "hidden" ? (
         <BetHistoryHidden />
       ) : (
-        <BetHistory history={data.history} />
+        <VisibleBetHistory
+          auctionUuid={data.auctionUuid}
+          canViewPlaces={data.canViewPlaces}
+          {...(data.currencyCode
+            ? { currencyCode: data.currencyCode }
+            : {})}
+        />
       )}
     </article>
   );

@@ -4,7 +4,6 @@ import { rootRoute } from "@/app/router/root.route";
 import { auctionDetailQueryOptions } from "@/entities/auction/api/auction.queries";
 import { resolveAuctionAccess } from "@/entities/auction/model/auction-access";
 import { auctionBetHistoryQueryOptions } from "@/entities/bet/api/bet.queries";
-import { mapBetHistory } from "@/entities/bet/model/map-bet-history";
 import {
   AuctionBetsPage,
   AuctionBetsPendingPage,
@@ -39,15 +38,18 @@ export const auctionBetsRoute = createRoute({
         return { ...base, visibility: "hidden" };
       }
 
-      const response = await queryClient.ensureQueryData(
-        auctionBetHistoryQueryOptions(auctionUuid),
-      );
-      const history = mapBetHistory(response, {
-        canViewPlaces: access.canViewPlaces,
-        currencyCode: usefulText(detail.payment.currency_code),
+      await queryClient.ensureQueryData({
+        ...auctionBetHistoryQueryOptions(auctionUuid),
+        revalidateIfStale: true,
       });
+      const currencyCode = usefulText(detail.payment.currency_code);
 
-      return { ...base, visibility: "visible", history };
+      return {
+        ...base,
+        visibility: "visible",
+        canViewPlaces: access.canViewPlaces,
+        ...(currencyCode ? { currencyCode } : {}),
+      };
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         throw notFound();

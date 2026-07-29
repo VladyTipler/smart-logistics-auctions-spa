@@ -12,5 +12,6 @@ export function auctionBetHistoryQueryOptions(auctionUuid: string) {
   return queryOptions({
     queryKey: betKeys.byAuction(auctionUuid),
     queryFn: () => betApi.getHistory(auctionUuid),
+    staleTime: 60_000,
   });
 }

@@ -16,8 +16,18 @@ function usefulText(value: string | null | undefined) {
   return text ? text : undefined;
 }
 
-function finiteNumber(value: number | null | undefined) {
-  return typeof value === "number" && Number.isFinite(value)
+function nonnegativeNumber(value: number | null | undefined) {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0
+    ? value
+    : undefined;
+}
+
+function positiveInteger(value: number | null | undefined) {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0
     ? value
     : undefined;
 }
@@ -50,9 +60,7 @@ function resolveStatus(
   cancelReason: string | undefined,
 ): BetStatusViewModel {
   if (cancelReason) {
-    if (isRejected !== true) {
-      return { label: "Отменена", tone: "cancelled" };
-    }
+    return { label: "Отменена", tone: "cancelled" };
   }
   if (isRejected === true) {
     return { label: "Отклонена", tone: "rejected" };
@@ -85,20 +93,20 @@ export function mapBetHistory(
 ): BetHistoryViewModel {
   const participantIds = new Set(
     response.bets
-      .map((bet) => finiteNumber(bet.subscriber_id))
+      .map((bet) => positiveInteger(bet.subscriber_id))
       .filter((id): id is number => id !== undefined),
   );
 
   const items: BetHistoryItemViewModel[] = response.bets.map((bet, index) => {
-    const subscriberId = finiteNumber(bet.subscriber_id);
+    const subscriberId = positiveInteger(bet.subscriber_id);
     const cancelReason = usefulText(bet.cancel_reason);
     const priceWithVat =
-      finiteNumber(bet.price_info?.price_with_vat) ??
-      finiteNumber(bet.price_with_vat);
+      nonnegativeNumber(bet.price_info?.price_with_vat) ??
+      nonnegativeNumber(bet.price_with_vat);
     const priceWithoutVat =
-      finiteNumber(bet.price_info?.price_no_vat) ??
-      finiteNumber(bet.price_no_vat);
-    const place = finiteNumber(bet.place);
+      nonnegativeNumber(bet.price_info?.price_no_vat) ??
+      nonnegativeNumber(bet.price_no_vat);
+    const place = positiveInteger(bet.place);
     const vatRate = usefulText(bet.price_info?.vat_rate);
 
     const contactName = usefulText(bet.contact_name);
@@ -109,7 +117,9 @@ export function mapBetHistory(
       vatRate === "0" ? "Без НДС" : vatRate ? `НДС ${vatRate}%` : undefined;
 
     return {
-      id: String(bet.id ?? `${subscriberId ?? "unknown"}-${index}`),
+      id: String(
+        positiveInteger(bet.id) ?? `${subscriberId ?? "unknown"}-${index}`,
+      ),
       participantLabel:
         usefulText(bet.organization_name) ??
         (subscriberId === undefined

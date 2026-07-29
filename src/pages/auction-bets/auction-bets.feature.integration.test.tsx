@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import {
   afterAll,
   afterEach,
@@ -17,7 +17,6 @@ import { server } from "@/shared/api/mocks/server";
 import { renderApp } from "@/shared/config/test/render-app";
 
 const auctionUuid = "11111111-1111-4111-8111-111111111111";
-const hiddenUuid = "44444444-4444-4444-8444-444444444444";
 const missingUuid = "99999999-9999-4999-8999-999999999999";
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -28,8 +27,10 @@ afterAll(() => server.close());
 describe("auction bid history feature", () => {
   it("loads the direct route, requests all bids, and shares the router QueryClient cache", async () => {
     let allParameter: string | null = null;
+    let betsRequests = 0;
     server.use(
       http.get("*/api/v1/auctions/:auctionUuid/bets", ({ request }) => {
+        betsRequests += 1;
         allParameter = new URL(request.url).searchParams.get("all");
         return HttpResponse.json({
           bets: [
@@ -73,6 +74,7 @@ describe("auction bid history feature", () => {
     expect(queryClient.getQueryData(betKeys.byAuction(auctionUuid))).toEqual(
       expect.objectContaining({ bets: expect.any(Array) }),
     );
+    expect(betsRequests).toBe(1);
     expect(screen.getByText("2 участника")).toBeInTheDocument();
 
     const desktop = screen.getByLabelText("Таблица ставок");
@@ -84,7 +86,10 @@ describe("auction bid history feature", () => {
     expect(within(table).getByText("32 000 ₽")).toBeInTheDocument();
     expect(within(table).getByText("26 666,67 ₽")).toBeInTheDocument();
     expect(within(table).getByText("Победитель")).toBeInTheDocument();
-    expect(within(table).getByText("Отклонена")).toBeInTheDocument();
+    expect(within(table).getByText("Отменена")).toBeInTheDocument();
+    expect(
+      within(table).getByText("Отменена участником"),
+    ).toBeInTheDocument();
 
     const mobile = screen.getByLabelText("Карточки ставок");
     const cards = within(mobile).getAllByRole("listitem");
@@ -92,6 +97,33 @@ describe("auction bid history feature", () => {
     expect(within(cards[0]).getByText("Fast Freight")).toBeInTheDocument();
     expect(within(cards[0]).getByText("Место 1")).toBeInTheDocument();
     expect(within(cards[0]).getByText("32 000 ₽")).toBeInTheDocument();
+
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid/bets", ({ request }) => {
+        betsRequests += 1;
+        allParameter = new URL(request.url).searchParams.get("all");
+        return HttpResponse.json({
+          bets: [
+            {
+              id: 3,
+              subscriber_id: 99,
+              organization_name: "Fresh Carrier",
+              price_with_vat: 27_500,
+              price_no_vat: 22_916.67,
+              place: 1,
+            },
+          ],
+        });
+      }),
+    );
+    await queryClient.invalidateQueries({
+      queryKey: betKeys.byAuction(auctionUuid),
+    });
+
+    expect(await screen.findAllByText("Fresh Carrier")).toHaveLength(2);
+    await waitFor(() => expect(betsRequests).toBe(2));
+    expect(allParameter).toBe("true");
+    expect(screen.queryByText("Fast Freight")).not.toBeInTheDocument();
   });
 
   it("renders an explicit empty history", async () => {
@@ -111,24 +143,36 @@ describe("auction bid history feature", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not request bets when either history guard hides access", async () => {
-    let betsRequests = 0;
-    server.use(
-      http.get("*/api/v1/auctions/:auctionUuid/bets", () => {
-        betsRequests += 1;
-        return HttpResponse.json({ bets: [] });
-      }),
-    );
+  it.each([
+    ["root-only", true, false],
+    ["nested-only", false, true],
+  ])(
+    "does not request bets when the %s history guard hides access",
+    async (_name, rootHidden, nestedHidden) => {
+      let betsRequests = 0;
+      const restricted = structuredClone(auctionFixtures[0].detail);
+      restricted.hide_bets_history = rootHidden;
+      restricted.trading.hide_bets_history = nestedHidden;
+      server.use(
+        http.get("*/api/v1/auctions/:auctionUuid", () =>
+          HttpResponse.json(restricted),
+        ),
+        http.get("*/api/v1/auctions/:auctionUuid/bets", () => {
+          betsRequests += 1;
+          return HttpResponse.json({ bets: [] });
+        }),
+      );
 
-    renderApp(`/auctions/${hiddenUuid}/bets`);
+      renderApp(`/auctions/${auctionUuid}/bets`);
 
-    expect(
-      await screen.findByRole("heading", {
-        name: "История ставок скрыта",
-      }),
-    ).toBeInTheDocument();
-    expect(betsRequests).toBe(0);
-  });
+      expect(
+        await screen.findByRole("heading", {
+          name: "История ставок скрыта",
+        }),
+      ).toBeInTheDocument();
+      expect(betsRequests).toBe(0);
+    },
+  );
 
   it("does not expose places when the central access policy hides them", async () => {
     const restricted = structuredClone(auctionFixtures[0].detail);

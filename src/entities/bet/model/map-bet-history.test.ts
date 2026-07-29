@@ -29,6 +29,7 @@ const response: BetListResponse = {
       price_no_vat: 26_250,
       place: 2,
       is_rejected: true,
+      cancel_reason: "Отменена после отклонения",
     },
     {
       id: 3,
@@ -47,6 +48,20 @@ const response: BetListResponse = {
       id: 4,
       organization_name: "",
       price_with_vat: Number.NaN,
+    },
+    {
+      id: 5,
+      subscriber_id: 0,
+      organization_name: "Invalid participant",
+      price_with_vat: -1,
+      price_no_vat: 0,
+      place: -2,
+    },
+    {
+      id: 6,
+      subscriber_id: 42.5,
+      organization_name: "Fractional participant",
+      place: 1.5,
     },
   ],
 };
@@ -80,6 +95,8 @@ describe("mapBetHistory", () => {
       vatRateLabel: "Без НДС",
     });
     expect(history.items[3]).not.toHaveProperty("priceWithVat");
+    expect(history.items[4]).not.toHaveProperty("priceWithVat");
+    expect(history.items[4].priceWithoutVat).toBe(0);
   });
 
   it("maps winner, rejected, active, and cancellation states", () => {
@@ -90,11 +107,77 @@ describe("mapBetHistory", () => {
 
     expect(history.items.map((item) => item.status)).toEqual([
       { label: "Победитель", tone: "winner" },
-      { label: "Отклонена", tone: "rejected" },
+      { label: "Отменена", tone: "cancelled" },
       { label: "Отменена", tone: "cancelled" },
       { label: "Активна", tone: "active" },
+      { label: "Активна", tone: "active" },
+      { label: "Активна", tone: "active" },
     ]);
+    expect(history.items[1].cancelReason).toBe(
+      "Отменена после отклонения",
+    );
     expect(history.items[2].cancelReason).toBe("Отменена участником");
+  });
+
+  it("accepts only positive integer subscriber ids and places", () => {
+    const history = mapBetHistory(
+      {
+        bets: [
+          { id: 10, subscriber_id: 9, place: 1 },
+          { id: 11, subscriber_id: 0, place: 0 },
+          { id: 12, subscriber_id: -3, place: -1 },
+          { id: 13, subscriber_id: 2.5, place: 1.5 },
+          { id: 14, subscriber_id: Number.NaN, place: Number.NaN },
+        ],
+      },
+      {
+        canViewPlaces: true,
+        currencyCode: "643",
+      },
+    );
+
+    expect(history.participantCount).toBe(1);
+    expect(history.items[0].place).toBe(1);
+    expect(
+      history.items.slice(1).every((item) => !("place" in item)),
+    ).toBe(true);
+  });
+
+  it("accepts only finite nonnegative prices", () => {
+    const history = mapBetHistory(
+      {
+        bets: [
+          { id: 20, price_with_vat: 0, price_no_vat: 10 },
+          {
+            id: 21,
+            price_with_vat: -1,
+            price_no_vat: Number.POSITIVE_INFINITY,
+          },
+        ],
+      },
+      {
+        canViewPlaces: true,
+        currencyCode: "643",
+      },
+    );
+
+    expect(history.items[0]).toMatchObject({
+      priceWithVat: 0,
+      priceWithoutVat: 10,
+    });
+    expect(history.items[1]).not.toHaveProperty("priceWithVat");
+    expect(history.items[1]).not.toHaveProperty("priceWithoutVat");
+  });
+
+  it("keeps valid places visible", () => {
+    const history = mapBetHistory(response, {
+      canViewPlaces: true,
+      currencyCode: "643",
+    });
+
+    expect(history.participantCount).toBe(2);
+    expect(history.items[4]).not.toHaveProperty("place");
+    expect(history.items[5]).not.toHaveProperty("place");
   });
 
   it("removes places from every item when access is hidden", () => {

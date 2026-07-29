@@ -1,8 +1,13 @@
 import { Select } from "@base-ui/react/select";
 import { Check, ChevronDown, Search, X } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 
+import {
+  findCityOption,
+  type CityOption,
+} from "../model/city-options";
 import type { AuctionSearch } from "../model/auction-search.schema";
+import { CityCombobox } from "./city-combobox.component";
 
 type AuctionFiltersProps = {
   compact?: boolean;
@@ -29,11 +34,20 @@ export function AuctionFilters({
   const [status, setStatus] = useState<string>(
     search.status?.[0] ?? "all",
   );
+  const [loadCity, setLoadCity] = useState<CityOption | null>(
+    findCityOption(search.loadCity),
+  );
+  const [unloadCity, setUnloadCity] = useState<CityOption | null>(
+    findCityOption(search.unloadCity),
+  );
+  const statusLabelId = `auction-status-label-${useId().replaceAll(":", "")}`;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onApply({
       cargoNum: cargoNumber.trim() || undefined,
+      loadCity: loadCity?.name,
+      unloadCity: unloadCity?.name,
       status:
         status === "all"
           ? undefined
@@ -61,14 +75,14 @@ export function AuctionFilters({
       </label>
 
       <div className="filter-field">
-        <span id="auction-status-label">Мой статус</span>
+        <span id={statusLabelId}>Мой статус</span>
         <Select.Root
           value={status}
           onValueChange={(value) => setStatus(value ?? "all")}
         >
           <Select.Trigger
             className="select-trigger"
-            aria-labelledby="auction-status-label"
+            aria-labelledby={statusLabelId}
           >
             <Select.Value>
               {participationStatuses.find((item) => item.value === status)
@@ -100,6 +114,19 @@ export function AuctionFilters({
           </Select.Portal>
         </Select.Root>
       </div>
+
+      <CityCombobox
+        label="Город погрузки"
+        placeholder="Откуда"
+        value={loadCity}
+        onValueChange={setLoadCity}
+      />
+      <CityCombobox
+        label="Город выгрузки"
+        placeholder="Куда"
+        value={unloadCity}
+        onValueChange={setUnloadCity}
+      />
 
       <button className="filter-submit" type="submit">
         Применить фильтры

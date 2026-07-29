@@ -27,13 +27,24 @@ export function AuctionList({ onReset, request }: AuctionListProps) {
   }
 
   const cards = (query.data.data ?? []).map(mapAuctionCard);
+  const total = query.data.meta?.total ?? cards.length;
 
   if (cards.length === 0) {
-    return <AuctionListEmpty onReset={onReset} />;
+    return (
+      <>
+        <p className="auction-list-summary" aria-live="polite">
+          Найдено: {total}
+        </p>
+        <AuctionListEmpty onReset={onReset} />
+      </>
+    );
   }
 
   return (
     <>
+      <p className="auction-list-summary" aria-live="polite">
+        Найдено: {total}
+      </p>
       <div className="auction-list">
         {cards.map((auction, index) => (
           <AuctionCard

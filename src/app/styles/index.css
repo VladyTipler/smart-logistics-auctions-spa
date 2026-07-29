@@ -210,7 +210,9 @@ a {
 
 .auction-filters {
   display: grid;
-  grid-template-columns: minmax(15rem, 1.7fr) minmax(12rem, 1fr) auto auto;
+  grid-template-columns:
+    minmax(12rem, 1.35fr) repeat(3, minmax(9rem, 1fr))
+    auto auto;
   gap: 0.75rem;
   align-items: end;
   margin-block: 2rem 1.25rem;
@@ -228,7 +230,8 @@ a {
 }
 
 .filter-field__control,
-.select-trigger {
+.select-trigger,
+.combobox-control {
   display: flex;
   min-height: 2.75rem;
   align-items: center;
@@ -241,6 +244,7 @@ a {
 }
 
 .filter-field__control:focus-within,
+.combobox-control:focus-within,
 .select-trigger:focus-visible,
 .filter-submit:focus-visible,
 .filter-reset:focus-visible,
@@ -271,6 +275,56 @@ a {
   justify-content: space-between;
   font: 0.875rem/1 var(--font-sans);
   cursor: pointer;
+}
+
+.combobox-control {
+  padding-inline: 0.8rem 0.35rem;
+}
+
+.combobox-input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-freight-ink);
+  font: 0.875rem/1 var(--font-sans);
+}
+
+.combobox-input::placeholder {
+  color: rgb(21 35 45 / 42%);
+}
+
+.combobox-clear,
+.combobox-trigger {
+  display: grid;
+  width: 1.75rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: rgb(21 35 45 / 58%);
+}
+
+.combobox-clear[data-disabled],
+.combobox-clear[data-empty] {
+  display: none;
+}
+
+.combobox-popup {
+  max-height: min(20rem, var(--available-height));
+  overflow: auto;
+}
+
+.combobox-list {
+  outline: 0;
+}
+
+.combobox-empty {
+  padding: 0.75rem;
+  color: rgb(21 35 45 / 58%);
+  font-size: 0.8rem;
 }
 
 .select-positioner {
@@ -564,6 +618,18 @@ a {
   padding-top: 1.25rem;
 }
 
+.auction-list-summary {
+  margin: 0;
+  border-top: 1px solid var(--color-steel);
+  padding-block: 0.8rem;
+  color: rgb(21 35 45 / 62%);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.045em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
 .auction-pagination__link {
   display: grid;
   width: 2.5rem;
@@ -642,6 +708,10 @@ a {
 }
 
 @media (max-width: 70rem) {
+  .auction-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .auction-card {
     grid-template-columns: 8rem minmax(16rem, 1fr) minmax(9rem, 0.6fr);
   }

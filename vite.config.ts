@@ -7,6 +7,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig(({ command }) => ({
   publicDir: command === "build" ? false : "public",
   plugins: [react(), tailwindcss()],
+  build: {
+    manifest: true,
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

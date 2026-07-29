@@ -4,14 +4,15 @@ import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
 
 const distDirectory = fileURLToPath(new URL("../dist", import.meta.url));
+const manifestPath = path.join(distDirectory, ".vite", "manifest.json");
 const forbiddenMarkers = ["[MSW]", "mockServiceWorker", "msw/browser"];
-const routeChunkPrefixes = [
-  "auction-list-page.component-",
-  "auction-detail-page.component-",
-  "auction-bets-page.component-",
-  "auction-bet-page.component-",
+const routeSourceModules = [
+  "src/pages/auction-list/auction-list-page.component.tsx",
+  "src/pages/auction-detail/auction-detail-page.component.tsx",
+  "src/pages/auction-bets/auction-bets-page.component.tsx",
+  "src/pages/auction-bet/auction-bet-page.component.tsx",
 ];
-const maxEntryChunkBytes = 500 * 1024;
+const maxEntryChunkBytes = 500_000;
 
 async function listFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -25,20 +26,40 @@ async function listFiles(directory) {
   return files.flat();
 }
 
-const files = await listFiles(distDirectory);
-const indexHtml = await readFile(path.join(distDirectory, "index.html"), "utf8");
-const entryMatch = indexHtml.match(
-  /<script\b[^>]*\bsrc=["']([^"']+\/index-[^"']+\.js)["'][^>]*>/i,
-);
+function resolveDistFile(file) {
+  const normalisedFile = file.replaceAll("\\", "/").replace(/^\/+/, "");
+  const resolvedFile = path.resolve(
+    distDirectory,
+    ...normalisedFile.split("/"),
+  );
+  const relativeFile = path.relative(distDirectory, resolvedFile);
 
-if (!entryMatch?.[1]) {
-  throw new Error("Production build is missing the hashed entry module.");
+  if (
+    relativeFile.startsWith("..") ||
+    path.isAbsolute(relativeFile)
+  ) {
+    throw new Error(`Manifest references a file outside dist: ${file}`);
+  }
+
+  return resolvedFile;
 }
 
-const entryPath = path.join(
-  distDirectory,
-  ...entryMatch[1].replace(/^\/+/, "").split("/"),
+const files = await listFiles(distDirectory);
+const indexHtml = await readFile(path.join(distDirectory, "index.html"), "utf8");
+const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+const manifestEntries = Object.entries(manifest);
+const entryChunks = manifestEntries.filter(
+  ([, chunk]) => chunk.isEntry === true && chunk.file.endsWith(".js"),
 );
+
+if (entryChunks.length !== 1) {
+  throw new Error(
+    `Expected one production JavaScript entry in the Vite manifest, found ${entryChunks.length}.`,
+  );
+}
+
+const [entryKey, entryChunk] = entryChunks[0];
+const entryPath = resolveDistFile(entryChunk.file);
 const entrySize = (await stat(entryPath)).size;
 
 if (entrySize > maxEntryChunkBytes) {
@@ -47,34 +68,59 @@ if (entrySize > maxEntryChunkBytes) {
   );
 }
 
-const routeChunks = routeChunkPrefixes.map((prefix) => {
-  const matches = files.filter(
-    (file) =>
-      path.basename(file).startsWith(prefix) &&
-      path.extname(file).toLowerCase() === ".js",
+const routeChunks = routeSourceModules.map((sourceModule) => {
+  const matches = manifestEntries.filter(
+    ([key, chunk]) =>
+      (key === sourceModule || chunk.src === sourceModule) &&
+      chunk.file.endsWith(".js"),
   );
 
   if (matches.length !== 1) {
     throw new Error(
-      `Expected one production route chunk with prefix "${prefix}", found ${matches.length}.`,
+      `Expected one manifest chunk for route source "${sourceModule}", found ${matches.length}.`,
     );
   }
 
-  return matches[0];
+  const [key, chunk] = matches[0];
+
+  if (chunk.isDynamicEntry !== true) {
+    throw new Error(
+      `Route source "${sourceModule}" is not a dynamic production entry.`,
+    );
+  }
+
+  return { file: resolveDistFile(chunk.file), key, output: chunk.file };
 });
 
-for (const routeChunk of routeChunks) {
-  const chunkName = path.basename(routeChunk);
+const eagerlyImportedKeys = new Set();
+const pendingImports = [...(entryChunk.imports ?? [])];
 
-  if (indexHtml.includes(chunkName)) {
+while (pendingImports.length > 0) {
+  const importKey = pendingImports.pop();
+
+  if (eagerlyImportedKeys.has(importKey)) {
+    continue;
+  }
+
+  eagerlyImportedKeys.add(importKey);
+  pendingImports.push(...(manifest[importKey]?.imports ?? []));
+}
+
+for (const routeChunk of routeChunks) {
+  const chunkName = path.basename(routeChunk.file);
+
+  if (
+    indexHtml.includes(routeChunk.output) ||
+    eagerlyImportedKeys.has(routeChunk.key)
+  ) {
     throw new Error(
-      `Route chunk "${chunkName}" is eagerly referenced by index.html.`,
+      `Route chunk "${chunkName}" is eagerly reachable from manifest entry "${entryKey}".`,
     );
   }
 }
 
 const forbiddenBundle = files.find((file) =>
-  /^(?:browser-.*|mockServiceWorker)\.js$/i.test(path.basename(file)),
+  /^mockServiceWorker\.js$/i.test(path.basename(file)),
 );
 
 if (forbiddenBundle) {

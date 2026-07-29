@@ -49,6 +49,16 @@ Regression coverage now asserts the visible/hidden protocol link and prevents fa
 - Statuses always include text; route/bid state is not conveyed by color alone.
 - Cargo numbers, dates, route measurements, and prices keep IBM Plex Mono with tabular numerals.
 
+## Automated cross-check
+
+The tracked browser evidence is backed by three isolated Playwright flows:
+
+- desktop filtering, direct detail/bid navigation, successful mutation, and synchronised history;
+- mobile filter Drawer, sticky bid action, and successful mutation;
+- direct-route guards for unavailable bidding, hidden history with zero bets requests, and removal of contacts, addresses, cargo value, and places.
+
+Vitest feature integration tests cover the same boundaries with the real Router, QueryClient, typed HTTP client, Zustand store, and MSW Node handlers. Unit tests are limited to pure mapping, access, URL/request, pagination, money, and decimal-step logic.
+
 ## Selected screenshots
 
 - [Desktop list](screenshots/list-1440.png)

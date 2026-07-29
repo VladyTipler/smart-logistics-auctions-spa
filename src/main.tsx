@@ -45,8 +45,7 @@ if (import.meta.env.DEV) {
     ...renderApplication,
     isDevelopment: true,
     startWorker: async () => {
-      const { setupWorker } = await import("msw/browser");
-      const worker = setupWorker();
+      const { worker } = await import("@/shared/api/mocks/browser");
 
       await worker.start({
         onUnhandledRequest: createUnhandledRequestPolicy(

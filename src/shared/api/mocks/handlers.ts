@@ -62,7 +62,10 @@ function isValidBidRequest(body: unknown): body is { price: number } {
 
 export const handlers = [
   http.post(`${API_PREFIX}/auctions/list`, async ({ request }) => {
-    const body = (await request.json()) as AuctionListRequest;
+    const body =
+      request.body === null
+        ? {}
+        : ((await request.json()) as AuctionListRequest);
     return HttpResponse.json(queryAuctionList(body));
   }),
 

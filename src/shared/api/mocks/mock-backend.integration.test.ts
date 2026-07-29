@@ -80,6 +80,17 @@ describe("stateful auction mock backend", () => {
     });
   });
 
+  it("treats an omitted optional list body as empty filters", async () => {
+    const response = await client.post<AuctionListResponse>("/auctions/list");
+
+    expect(response.data).toHaveLength(5);
+    expect(response.meta).toMatchObject({
+      current_page: 1,
+      per_page: 20,
+      total: 5,
+    });
+  });
+
   it("paginates without changing the deterministic source order", async () => {
     const firstPage = await listAuctions({ page: 1, per_page: 2 });
     const secondPage = await listAuctions({ page: 2, per_page: 2 });

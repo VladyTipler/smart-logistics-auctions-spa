@@ -33,7 +33,7 @@ describe("application routes", () => {
     ["/auctions", "Аукционы грузов"],
     [`/auctions/${auctionUuid}`, "Аукцион SL-1001"],
     [`/auctions/${auctionUuid}/bets`, "История ставок SL-1001"],
-    ["/auctions/auction-42/bet", "Новая ставка"],
+    [`/auctions/${auctionUuid}/bet`, "Ставка на SL-1001"],
   ])("renders %s directly", async (initialUrl, heading) => {
     renderApp(initialUrl);
 

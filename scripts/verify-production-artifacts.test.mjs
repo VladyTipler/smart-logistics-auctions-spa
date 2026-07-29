@@ -14,16 +14,15 @@ import { promisify } from "node:util";
 import { fileURLToPath, URL } from "node:url";
 import test from "node:test";
 
+import { routeSourceModules } from "./artifact-verifier-core.mjs";
+
 const execFileAsync = promisify(execFile);
+const verifierCoreSource = fileURLToPath(
+  new URL("./artifact-verifier-core.mjs", import.meta.url),
+);
 const verifierSource = fileURLToPath(
   new URL("./verify-production-artifacts.mjs", import.meta.url),
 );
-const routeSources = [
-  "src/pages/auction-list/auction-list-page.component.tsx",
-  "src/pages/auction-detail/auction-detail-page.component.tsx",
-  "src/pages/auction-bets/auction-bets-page.component.tsx",
-  "src/pages/auction-bet/auction-bet-page.component.tsx",
-];
 const legacyRouteFiles = [
   "assets/auction-list-page.component-a.js",
   "assets/auction-detail-page.component-b.js",
@@ -32,7 +31,7 @@ const legacyRouteFiles = [
 ];
 
 async function createFixture({
-  entryDynamicImports = routeSources,
+  entryDynamicImports = routeSourceModules,
   entrySize = 100,
   extraFiles = {},
   routeFiles = legacyRouteFiles,
@@ -53,6 +52,10 @@ async function createFixture({
     verifierSource,
     path.join(scriptsDirectory, "verify-production-artifacts.mjs"),
   );
+  await copyFile(
+    verifierCoreSource,
+    path.join(scriptsDirectory, "artifact-verifier-core.mjs"),
+  );
   await writeFile(
     path.join(distDirectory, "index.html"),
     `<script type="module" src="/${entryFile}"></script>`,
@@ -68,7 +71,7 @@ async function createFixture({
     },
   };
 
-  for (const [index, source] of routeSources.entries()) {
+  for (const [index, source] of routeSourceModules.entries()) {
     const file = routeFiles[index];
     manifest[source] = {
       file,
@@ -160,7 +163,7 @@ test("uses manifest source modules instead of output-name prefixes", async () =>
 
 test("rejects an orphan dynamic route chunk", async () => {
   await withFixture(
-    { entryDynamicImports: routeSources.slice(0, -1) },
+    { entryDynamicImports: routeSourceModules.slice(0, -1) },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(

@@ -1,60 +1,32 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
+
+import {
+  collectManifestReachability,
+  findManifestSourceChunk,
+  listArtifactFiles,
+  resolveArtifactFile,
+  routeSourceModules,
+} from "./artifact-verifier-core.mjs";
 
 const distDirectory = fileURLToPath(new URL("../dist-demo", import.meta.url));
 const manifestPath = path.join(distDirectory, ".vite", "manifest.json");
 const repositoryBase = "/smart-logistics-auctions-spa/";
 const workerFileName = "mockServiceWorker.js";
 const mswBrowserSource = "src/shared/api/mocks/browser.ts";
-const routeSourceModules = [
-  "src/pages/auction-list/auction-list-page.component.tsx",
-  "src/pages/auction-detail/auction-detail-page.component.tsx",
-  "src/pages/auction-bets/auction-bets-page.component.tsx",
-  "src/pages/auction-bet/auction-bet-page.component.tsx",
-];
-
-async function listFiles(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(
-    entries.map((entry) => {
-      const entryPath = path.join(directory, entry.name);
-      return entry.isDirectory() ? listFiles(entryPath) : entryPath;
-    }),
-  );
-
-  return files.flat();
-}
 
 function resolveDistFile(file) {
-  const normalisedFile = file.replaceAll("\\", "/").replace(/^\/+/, "");
-  const resolvedFile = path.resolve(
-    distDirectory,
-    ...normalisedFile.split("/"),
-  );
-  const relativeFile = path.relative(distDirectory, resolvedFile);
-
-  if (relativeFile.startsWith("..") || path.isAbsolute(relativeFile)) {
-    throw new Error(`Manifest references a file outside dist-demo: ${file}`);
-  }
-
-  return resolvedFile;
+  return resolveArtifactFile(distDirectory, file, "dist-demo");
 }
 
 function findSourceChunk(manifestEntries, source, label) {
-  const matches = manifestEntries.filter(
-    ([key, chunk]) =>
-      (key === source || chunk.src === source) && chunk.file.endsWith(".js"),
+  const { chunk, key } = findManifestSourceChunk(
+    manifestEntries,
+    source,
+    label,
   );
-
-  if (matches.length !== 1) {
-    throw new Error(
-      `Expected one manifest chunk for ${label} "${source}", found ${matches.length}.`,
-    );
-  }
-
-  const [key, chunk] = matches[0];
 
   if (chunk.isDynamicEntry !== true) {
     throw new Error(
@@ -70,7 +42,7 @@ function findSourceChunk(manifestEntries, source, label) {
   };
 }
 
-const files = await listFiles(distDirectory);
+const files = await listArtifactFiles(distDirectory);
 const indexHtml = await readFile(path.join(distDirectory, "index.html"), "utf8");
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 const manifestEntries = Object.entries(manifest);
@@ -115,39 +87,8 @@ const routeChunks = routeSourceModules.map((source) =>
   findSourceChunk(manifestEntries, source, "route source"),
 );
 
-const dynamicallyReachableKeys = new Set();
-const eagerlyReachableKeys = new Set();
-const visitedReachabilityStates = new Set();
-const pendingImports = [{ key: entryKey, reachedDynamically: false }];
-
-while (pendingImports.length > 0) {
-  const { key, reachedDynamically } = pendingImports.pop();
-  const reachabilityState = `${reachedDynamically ? "dynamic" : "eager"}:${key}`;
-
-  if (visitedReachabilityStates.has(reachabilityState)) {
-    continue;
-  }
-
-  visitedReachabilityStates.add(reachabilityState);
-
-  if (key !== entryKey) {
-    if (reachedDynamically) {
-      dynamicallyReachableKeys.add(key);
-    } else {
-      eagerlyReachableKeys.add(key);
-    }
-  }
-
-  const chunk = manifest[key];
-
-  for (const importKey of chunk?.imports ?? []) {
-    pendingImports.push({ key: importKey, reachedDynamically });
-  }
-
-  for (const importKey of chunk?.dynamicImports ?? []) {
-    pendingImports.push({ key: importKey, reachedDynamically: true });
-  }
-}
+const { dynamicallyReachableKeys, eagerlyReachableKeys } =
+  collectManifestReachability(manifest, entryKey);
 
 if (!dynamicallyReachableKeys.has(mswBrowserChunk.key)) {
   throw new Error(

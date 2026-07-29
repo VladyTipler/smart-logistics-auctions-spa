@@ -4,12 +4,21 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-export function shouldEnableMockApi(mode: string) {
-  return mode === "development" || mode === "demo" || mode === "test";
+type MockApiContext = {
+  command: "build" | "serve";
+  mode: string;
+};
+
+export function shouldEnableMockApi({ command, mode }: MockApiContext) {
+  if (mode === "demo") {
+    return command === "build" || command === "serve";
+  }
+
+  return command === "serve" && (mode === "development" || mode === "test");
 }
 
 export default defineConfig(({ command, mode }) => {
-  const enableMockApi = shouldEnableMockApi(mode);
+  const enableMockApi = shouldEnableMockApi({ command, mode });
   const isDemo = mode === "demo";
 
   return {

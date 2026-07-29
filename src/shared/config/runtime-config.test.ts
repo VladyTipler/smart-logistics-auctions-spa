@@ -49,13 +49,19 @@ describe("runtime config", () => {
   });
 
   it.each([
-    ["development", true],
-    ["demo", true],
-    ["test", true],
-    ["production", false],
-    ["staging", false],
-    ["preview", false],
-  ])("sets the mock API compile flag for %s mode", (mode, expected) => {
-    expect(shouldEnableMockApi(mode)).toBe(expected);
-  });
+    ["serve", "development", true],
+    ["build", "development", false],
+    ["serve", "demo", true],
+    ["build", "demo", true],
+    ["serve", "test", true],
+    ["build", "test", false],
+    ["build", "production", false],
+    ["build", "staging", false],
+    ["serve", "preview", false],
+  ] as const)(
+    "sets the mock API compile flag for %s command in %s mode",
+    (command, mode, expected) => {
+      expect(shouldEnableMockApi({ command, mode })).toBe(expected);
+    },
+  );
 });

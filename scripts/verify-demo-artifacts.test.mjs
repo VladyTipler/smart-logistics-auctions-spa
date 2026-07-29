@@ -14,23 +14,22 @@ import { promisify } from "node:util";
 import { fileURLToPath, URL } from "node:url";
 import test from "node:test";
 
+import { routeSourceModules } from "./artifact-verifier-core.mjs";
+
 const execFileAsync = promisify(execFile);
+const verifierCoreSource = fileURLToPath(
+  new URL("./artifact-verifier-core.mjs", import.meta.url),
+);
 const verifierSource = fileURLToPath(
   new URL("./verify-demo-artifacts.mjs", import.meta.url),
 );
 const repositoryBase = "/smart-logistics-auctions-spa/";
 const mswBrowserSource = "src/shared/api/mocks/browser.ts";
-const routeSources = [
-  "src/pages/auction-list/auction-list-page.component.tsx",
-  "src/pages/auction-detail/auction-detail-page.component.tsx",
-  "src/pages/auction-bets/auction-bets-page.component.tsx",
-  "src/pages/auction-bet/auction-bet-page.component.tsx",
-];
 
 async function createFixture({
   baseUrl = repositoryBase,
   includeWorker = true,
-  entryDynamicImports = [mswBrowserSource, ...routeSources],
+  entryDynamicImports = [mswBrowserSource, ...routeSourceModules],
   entryImports = [],
   includeMswBrowserEntry = true,
   includeMswBrowserScript = false,
@@ -54,6 +53,10 @@ async function createFixture({
   await mkdir(scriptsDirectory, { recursive: true });
   await mkdir(assetsDirectory, { recursive: true });
   await mkdir(manifestDirectory, { recursive: true });
+  await copyFile(
+    verifierCoreSource,
+    path.join(scriptsDirectory, "artifact-verifier-core.mjs"),
+  );
 
   try {
     await copyFile(
@@ -106,7 +109,7 @@ async function createFixture({
     );
   }
 
-  for (const [index, source] of routeSources.entries()) {
+  for (const [index, source] of routeSourceModules.entries()) {
     if (source === omittedRouteSource) {
       continue;
     }
@@ -207,7 +210,7 @@ test("rejects a missing exact MSW browser manifest entry", async () => {
 
 test("rejects an orphan MSW browser dynamic entry", async () => {
   await withFixture(
-    { entryDynamicImports: routeSources },
+    { entryDynamicImports: routeSourceModules },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(
@@ -275,7 +278,7 @@ test("uses exact route sources instead of output-name prefixes", async () => {
 
 test("rejects a missing exact route source entry", async () => {
   await withFixture(
-    { omittedRouteSource: routeSources.at(-1) },
+    { omittedRouteSource: routeSourceModules.at(-1) },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(
@@ -288,7 +291,7 @@ test("rejects a missing exact route source entry", async () => {
 
 test("rejects a route source that is not a dynamic entry", async () => {
   await withFixture(
-    { nonDynamicRouteSource: routeSources.at(-1) },
+    { nonDynamicRouteSource: routeSourceModules.at(-1) },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(
@@ -301,7 +304,7 @@ test("rejects a route source that is not a dynamic entry", async () => {
 
 test("rejects an eagerly reachable route source", async () => {
   await withFixture(
-    { entryImports: [routeSources.at(-1)] },
+    { entryImports: [routeSourceModules.at(-1)] },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(
@@ -315,7 +318,10 @@ test("rejects an eagerly reachable route source", async () => {
 test("rejects an orphan lazy route chunk", async () => {
   await withFixture(
     {
-      entryDynamicImports: [mswBrowserSource, ...routeSources.slice(0, -1)],
+      entryDynamicImports: [
+        mswBrowserSource,
+        ...routeSourceModules.slice(0, -1),
+      ],
     },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);

@@ -89,29 +89,60 @@ const routeChunks = routeSourceModules.map((sourceModule) => {
     );
   }
 
-  return { file: resolveDistFile(chunk.file), key, output: chunk.file };
+  return {
+    file: resolveDistFile(chunk.file),
+    key,
+    output: chunk.file,
+    source: sourceModule,
+  };
 });
 
-const eagerlyImportedKeys = new Set();
-const pendingImports = [...(entryChunk.imports ?? [])];
+const dynamicallyReachableKeys = new Set();
+const eagerlyReachableKeys = new Set();
+const visitedReachabilityStates = new Set();
+const pendingImports = [{ key: entryKey, reachedDynamically: false }];
 
 while (pendingImports.length > 0) {
-  const importKey = pendingImports.pop();
+  const { key, reachedDynamically } = pendingImports.pop();
+  const reachabilityState = `${reachedDynamically ? "dynamic" : "eager"}:${key}`;
 
-  if (eagerlyImportedKeys.has(importKey)) {
+  if (visitedReachabilityStates.has(reachabilityState)) {
     continue;
   }
 
-  eagerlyImportedKeys.add(importKey);
-  pendingImports.push(...(manifest[importKey]?.imports ?? []));
+  visitedReachabilityStates.add(reachabilityState);
+
+  if (key !== entryKey) {
+    if (reachedDynamically) {
+      dynamicallyReachableKeys.add(key);
+    } else {
+      eagerlyReachableKeys.add(key);
+    }
+  }
+
+  const chunk = manifest[key];
+
+  for (const importKey of chunk?.imports ?? []) {
+    pendingImports.push({ key: importKey, reachedDynamically });
+  }
+
+  for (const importKey of chunk?.dynamicImports ?? []) {
+    pendingImports.push({ key: importKey, reachedDynamically: true });
+  }
 }
 
 for (const routeChunk of routeChunks) {
   const chunkName = path.basename(routeChunk.file);
 
+  if (!dynamicallyReachableKeys.has(routeChunk.key)) {
+    throw new Error(
+      `Route source "${routeChunk.source}" is not dynamically reachable from manifest entry "${entryKey}".`,
+    );
+  }
+
   if (
     indexHtml.includes(routeChunk.output) ||
-    eagerlyImportedKeys.has(routeChunk.key)
+    eagerlyReachableKeys.has(routeChunk.key)
   ) {
     throw new Error(
       `Route chunk "${chunkName}" is eagerly reachable from manifest entry "${entryKey}".`,

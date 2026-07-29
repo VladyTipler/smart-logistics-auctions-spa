@@ -32,6 +32,7 @@ const legacyRouteFiles = [
 ];
 
 async function createFixture({
+  entryDynamicImports = routeSources,
   entrySize = 100,
   extraFiles = {},
   routeFiles = legacyRouteFiles,
@@ -63,7 +64,7 @@ async function createFixture({
       file: entryFile,
       src: "src/main.tsx",
       isEntry: true,
-      dynamicImports: routeSources,
+      dynamicImports: entryDynamicImports,
     },
   };
 
@@ -153,6 +154,19 @@ test("uses manifest source modules instead of output-name prefixes", async () =>
     },
     ({ status, stderr }) => {
       assert.equal(status, 0, stderr);
+    },
+  );
+});
+
+test("rejects an orphan dynamic route chunk", async () => {
+  await withFixture(
+    { entryDynamicImports: routeSources.slice(0, -1) },
+    ({ status, stderr, stdout }) => {
+      assert.notEqual(status, 0, stdout);
+      assert.match(
+        stderr,
+        /route source "src\/pages\/auction-bet\/auction-bet-page\.component\.tsx" is not dynamically reachable from manifest entry "src\/main\.tsx"/i,
+      );
     },
   );
 });

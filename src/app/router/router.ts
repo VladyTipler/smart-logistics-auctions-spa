@@ -1,5 +1,7 @@
 import {
   createRouter,
+  parseSearchWith,
+  stringifySearchWith,
   type RouterHistory,
 } from "@tanstack/react-router";
 
@@ -20,10 +22,33 @@ type CreateAppRouterOptions = {
   history?: RouterHistory;
 };
 
+function parseStructuredSearchValue(value: string): unknown {
+  if (
+    value === "true" ||
+    value === "false" ||
+    value === "null" ||
+    value.startsWith("[") ||
+    value.startsWith("{") ||
+    value.startsWith("\"")
+  ) {
+    return JSON.parse(value) as unknown;
+  }
+
+  throw new SyntaxError("Keep scalar values lexical");
+}
+
+export const parseAppSearch = parseSearchWith(parseStructuredSearchValue);
+export const stringifyAppSearch = stringifySearchWith(
+  JSON.stringify,
+  parseStructuredSearchValue,
+);
+
 export function createAppRouter({ history }: CreateAppRouterOptions = {}) {
   return createRouter({
     routeTree,
     history,
+    parseSearch: parseAppSearch,
+    stringifySearch: stringifyAppSearch,
     defaultPreload: "intent",
     scrollRestoration:
       history === undefined && import.meta.env.MODE !== "test",

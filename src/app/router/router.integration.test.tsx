@@ -6,6 +6,23 @@ import { renderApp } from "@/shared/config/test/render-app";
 
 describe("application routes", () => {
   it.each([
+    ["/auctions?page=100", { page: 100, perPage: 10 }],
+    ["/auctions?page=1e2", { page: 1, perPage: 10 }],
+    [
+      "/auctions?statuses=%5B1%2C2%5D&status=%5B%22Leading%22%5D",
+      { page: 1, perPage: 10, statuses: [1, 2], status: ["Leading"] },
+    ],
+  ])("preserves lexical scalar search validation for %s", async (url, expected) => {
+    const { router } = renderApp(url);
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Аукционы грузов",
+    });
+    expect(router.state.location.search).toEqual(expected);
+  });
+
+  it.each([
     ["/auctions", "Аукционы грузов"],
     ["/auctions/auction-42", "Карточка аукциона"],
     ["/auctions/auction-42/bets", "История ставок"],

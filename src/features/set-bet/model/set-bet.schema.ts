@@ -12,16 +12,57 @@ export type SetBetConstraints = {
   step?: number | null;
 };
 
+type ParsedMoney =
+  | { kind: "invalid" }
+  | { kind: "precision" }
+  | { kind: "valid"; normalized: string; value: number };
+
+const plainDecimalPattern = /^\d+(?:[.,]\d+)?$/;
+const maximumMoneyCoefficient = BigInt(Number.MAX_SAFE_INTEGER);
+
+function parseMoneyInput(input: string): ParsedMoney {
+  const trimmed = input.trim();
+
+  if (!plainDecimalPattern.test(trimmed)) {
+    return { kind: "invalid" };
+  }
+
+  const normalized = trimmed.replace(",", ".");
+  const [integer, fraction = ""] = normalized.split(".");
+  const coefficientSource =
+    `${integer}${fraction}`.replace(/^0+/, "") || "0";
+
+  if (
+    fraction.length > 6 ||
+    coefficientSource.length > 16
+  ) {
+    return { kind: "precision" };
+  }
+
+  const coefficient = BigInt(coefficientSource);
+
+  if (
+    coefficient > maximumMoneyCoefficient
+  ) {
+    return { kind: "precision" };
+  }
+
+  return {
+    kind: "valid",
+    normalized,
+    value: Number(normalized),
+  };
+}
+
 export function createSetBetSchema(constraints: SetBetConstraints) {
   return z
     .object({
       price: z.string(),
     })
     .superRefine(({ price }, context) => {
-      const normalized = price.trim().replace(",", ".");
-      const parsed = Number(normalized);
+      const trimmed = price.trim();
 
-      if (normalized.length === 0) {
+      if (trimmed.length === 0) {
         context.addIssue({
           code: "custom",
           message: "Укажите сумму ставки",
@@ -30,7 +71,7 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
         return;
       }
 
-      if (!Number.isFinite(parsed) || parsed <= 0) {
+      if (/^-\d/.test(trimmed)) {
         context.addIssue({
           code: "custom",
           message: "Ставка должна быть положительным числом",
@@ -39,7 +80,36 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
         return;
       }
 
-      if (constraints.min != null && parsed < constraints.min) {
+      const money = parseMoneyInput(trimmed);
+
+      if (money.kind === "invalid") {
+        context.addIssue({
+          code: "custom",
+          message: "Введите сумму обычным десятичным числом",
+          path: ["price"],
+        });
+        return;
+      }
+
+      if (money.kind === "precision") {
+        context.addIssue({
+          code: "custom",
+          message: "Сумма содержит слишком много разрядов",
+          path: ["price"],
+        });
+        return;
+      }
+
+      if (money.value <= 0) {
+        context.addIssue({
+          code: "custom",
+          message: "Ставка должна быть положительным числом",
+          path: ["price"],
+        });
+        return;
+      }
+
+      if (constraints.min != null && money.value < constraints.min) {
         context.addIssue({
           code: "custom",
           message: `Минимальная ставка — ${constraints.min}`,
@@ -48,7 +118,7 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
         return;
       }
 
-      if (constraints.max != null && parsed > constraints.max) {
+      if (constraints.max != null && money.value > constraints.max) {
         context.addIssue({
           code: "custom",
           message: `Максимальная ставка — ${constraints.max}`,
@@ -60,7 +130,7 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
       if (
         constraints.available != null &&
         constraints.direction === "Down" &&
-        parsed > constraints.available
+        money.value > constraints.available
       ) {
         context.addIssue({
           code: "custom",
@@ -73,7 +143,7 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
       if (
         constraints.available != null &&
         constraints.direction === "Up" &&
-        parsed < constraints.available
+        money.value < constraints.available
       ) {
         context.addIssue({
           code: "custom",
@@ -86,7 +156,11 @@ export function createSetBetSchema(constraints: SetBetConstraints) {
       const stepOrigin = constraints.available ?? constraints.min;
       if (
         stepOrigin != null &&
-        !isDecimalStepAligned(normalized, stepOrigin, constraints.step)
+        !isDecimalStepAligned(
+          money.normalized,
+          stepOrigin,
+          constraints.step,
+        )
       ) {
         context.addIssue({
           code: "custom",

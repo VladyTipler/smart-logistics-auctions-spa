@@ -22,6 +22,10 @@ import { server } from "@/shared/api/mocks/server";
 import { renderApp } from "@/shared/config/test/render-app";
 
 const auctionUuid = "11111111-1111-4111-8111-111111111111";
+const listRequest = { page: 1, per_page: 10 } as const;
+const listQueryKey = ["auctions", "list", listRequest] as const;
+const detailQueryKey = ["auctions", "detail", auctionUuid] as const;
+const betQueryKey = ["bets", "auction", auctionUuid] as const;
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => resetMockDatabase());
@@ -43,10 +47,14 @@ describe("auction place-bid feature", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Кишинёв → Бухарест")).toBeInTheDocument();
 
-    await Promise.all([
-      queryClient.fetchQuery(auctionListQueryOptions({ page: 1, per_page: 10 })),
-      queryClient.fetchQuery(auctionBetHistoryQueryOptions(auctionUuid)),
-    ]);
+    await act(async () => {
+      await Promise.all([
+        queryClient.fetchQuery(
+          auctionListQueryOptions(listRequest),
+        ),
+        queryClient.fetchQuery(auctionBetHistoryQueryOptions(auctionUuid)),
+      ]);
+    });
 
     const input = screen.getByRole("textbox", { name: "Сумма ставки" });
     await user.clear(input);
@@ -170,6 +178,142 @@ describe("auction place-bid feature", () => {
       await screen.findByText("Доступная цена уже 30 500 ₽."),
     ).toBeInTheDocument();
     expect(input).toHaveValue("31000");
+  });
+
+  it("uses a sanitised non-RUB currency suffix from auction detail", async () => {
+    const usdAuction = structuredClone(auctionFixtures[0].detail);
+    usdAuction.payment.currency_code = "USD";
+    server.use(
+      http.get("*/api/v1/auctions/:auctionUuid", () =>
+        HttpResponse.json(usdAuction),
+      ),
+    );
+
+    renderApp(`/auctions/${auctionUuid}/bet`);
+
+    expect(
+      await screen.findByRole("heading", { name: "Ставка на SL-1001" }),
+    ).toBeInTheDocument();
+    const input = screen.getByRole("textbox", { name: "Сумма ставки" });
+    expect(input.parentElement).toHaveTextContent("$");
+    expect(input.parentElement).not.toHaveTextContent("₽");
+    expect(
+      screen.getByText(/Следующая доступная цена/),
+    ).toHaveTextContent("$");
+  });
+
+  it("keeps input and cached state unchanged after a real server 403", async () => {
+    server.use(
+      http.post("*/api/v1/auctions/:auctionUuid/bets", () =>
+        HttpResponse.json(
+          {
+            code: "bet_not_allowed",
+            title: "Ставка недоступна",
+            message: "В этом аукционе нельзя установить ставку",
+          },
+          {
+            status: 403,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    const { queryClient } = renderApp(`/auctions/${auctionUuid}/bet`);
+    await act(async () => {
+      await Promise.all([
+        queryClient.fetchQuery(
+          auctionListQueryOptions(listRequest),
+        ),
+        queryClient.fetchQuery(auctionBetHistoryQueryOptions(auctionUuid)),
+      ]);
+    });
+    const stateBefore = structuredClone({
+      bets: queryClient.getQueryData(betQueryKey),
+      detail: queryClient.getQueryData(detailQueryKey),
+      list: queryClient.getQueryData(listQueryKey),
+    });
+    const input = await screen.findByRole("textbox", {
+      name: "Сумма ставки",
+    });
+    await user.clear(input);
+    await user.type(input, "31000");
+    await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent(
+      "Ставка больше недоступна. Обновите условия аукциона.",
+    );
+    expect(input).toHaveValue("31000");
+    expect(
+      screen.queryByRole("status", { name: "Ставка принята" }),
+    ).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryState(detailQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect(
+      queryClient.getQueryState(listQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect(
+      queryClient.getQueryState(betQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect({
+      bets: queryClient.getQueryData(betQueryKey),
+      detail: queryClient.getQueryData(detailQueryKey),
+      list: queryClient.getQueryData(listQueryKey),
+    }).toEqual(stateBefore);
+  });
+
+  it("keeps input and cached state unchanged after a real network error", async () => {
+    server.use(
+      http.post("*/api/v1/auctions/:auctionUuid/bets", () =>
+        HttpResponse.error(),
+      ),
+    );
+    const user = userEvent.setup();
+    const { queryClient } = renderApp(`/auctions/${auctionUuid}/bet`);
+    await act(async () => {
+      await Promise.all([
+        queryClient.fetchQuery(
+          auctionListQueryOptions(listRequest),
+        ),
+        queryClient.fetchQuery(auctionBetHistoryQueryOptions(auctionUuid)),
+      ]);
+    });
+    const stateBefore = structuredClone({
+      bets: queryClient.getQueryData(betQueryKey),
+      detail: queryClient.getQueryData(detailQueryKey),
+      list: queryClient.getQueryData(listQueryKey),
+    });
+    const input = await screen.findByRole("textbox", {
+      name: "Сумма ставки",
+    });
+    await user.clear(input);
+    await user.type(input, "31000");
+    await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Не удалось отправить ставку. Попробуйте ещё раз.",
+    );
+    expect(input).toHaveValue("31000");
+    expect(
+      screen.queryByRole("status", { name: "Ставка принята" }),
+    ).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryState(detailQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect(
+      queryClient.getQueryState(listQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect(
+      queryClient.getQueryState(betQueryKey)?.isInvalidated,
+    ).toBe(false);
+    expect({
+      bets: queryClient.getQueryData(betQueryKey),
+      detail: queryClient.getQueryData(detailQueryKey),
+      list: queryClient.getQueryData(listQueryKey),
+    }).toEqual(stateBefore);
   });
 
   it("renders unavailable from central access policy and sends no mutation", async () => {

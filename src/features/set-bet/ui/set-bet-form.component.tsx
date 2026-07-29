@@ -113,7 +113,7 @@ export function SetBetForm({ auction }: SetBetFormProps) {
             aria-describedby={descriptionId}
             aria-invalid={Boolean(errorMessage)}
           />
-          <span aria-hidden="true">₽</span>
+          <span>{auction.currencySuffix}</span>
         </div>
         <p id="set-bet-price-hint" className="set-bet-form__hint">
           {auction.constraints.available == null

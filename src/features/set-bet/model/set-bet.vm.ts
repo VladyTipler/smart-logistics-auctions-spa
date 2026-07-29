@@ -10,8 +10,21 @@ export type SetBetViewModel = {
   cargoNumber: string;
   constraints: SetBetConstraints;
   currencyCode: string;
+  currencySuffix: string;
   currentPrice?: number;
   routeLabel: string;
+};
+
+const currencyByCode: Record<string, { code: string; suffix: string }> = {
+  "498": { code: "498", suffix: "MDL" },
+  "643": { code: "643", suffix: "₽" },
+  "840": { code: "840", suffix: "$" },
+  "978": { code: "978", suffix: "€" },
+  EUR: { code: "978", suffix: "€" },
+  MDL: { code: "498", suffix: "MDL" },
+  RUB: { code: "643", suffix: "₽" },
+  RUR: { code: "643", suffix: "₽" },
+  USD: { code: "840", suffix: "$" },
 };
 
 function usefulText(value: string | null | undefined, fallback: string): string {
@@ -36,6 +49,11 @@ export function mapSetBetViewModel(
     (route) => route.op_type === "Unloading",
   );
   const price = detail.trading.price;
+  const rawCurrencyCode = usefulText(detail.payment.currency_code, "643");
+  const currency = currencyByCode[rawCurrencyCode.toUpperCase()] ?? {
+    code: rawCurrencyCode,
+    suffix: rawCurrencyCode,
+  };
 
   return {
     auctionUuid,
@@ -47,7 +65,8 @@ export function mapSetBetViewModel(
       min: price?.min,
       step: price?.step,
     },
-    currencyCode: usefulText(detail.payment.currency_code, "643"),
+    currencyCode: currency.code,
+    currencySuffix: currency.suffix,
     ...(price?.current == null ? {} : { currentPrice: price.current }),
     routeLabel: `${usefulText(
       loading?.location?.city_name,

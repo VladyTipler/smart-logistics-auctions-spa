@@ -50,9 +50,12 @@ export function SetBetForm({ auction }: SetBetFormProps) {
   });
   const isPending = isSubmitting || mutation.isPending;
   const errorMessage = errors.price?.message;
-  const descriptionId = errorMessage
-    ? "set-bet-price-hint set-bet-price-error"
-    : "set-bet-price-hint";
+  const rootErrorMessage = errors.root?.server?.message;
+  const descriptionId = [
+    "set-bet-price-hint",
+    ...(errorMessage ? ["set-bet-price-error"] : []),
+    ...(rootErrorMessage ? ["set-bet-server-error"] : []),
+  ].join(" ");
 
   const submit = handleSubmit(async ({ price }) => {
     if (
@@ -161,14 +164,14 @@ export function SetBetForm({ auction }: SetBetFormProps) {
           <p
             id="set-bet-price-error"
             className="set-bet-form__error"
-            role="alert"
+            role={errors.price?.type === "server" ? undefined : "alert"}
           >
             {errorMessage}
           </p>
         ) : null}
-        {errors.root?.server?.message ? (
-          <p className="set-bet-form__error" role="alert">
-            {errors.root.server.message}
+        {rootErrorMessage ? (
+          <p id="set-bet-server-error" className="set-bet-form__error">
+            {rootErrorMessage}
           </p>
         ) : null}
         <button type="submit" disabled={isPending}>

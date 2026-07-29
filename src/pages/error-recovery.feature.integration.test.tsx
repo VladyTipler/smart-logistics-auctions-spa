@@ -1,5 +1,5 @@
 import { createMemoryHistory } from "@tanstack/react-router";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 
@@ -14,6 +14,8 @@ import { auctionFixtures } from "@/shared/api/mocks/fixtures/auctions.fixture";
 import { resetMockDatabase } from "@/shared/api/mocks/mock-database";
 import { server } from "@/shared/api/mocks/server";
 import { renderApp } from "@/shared/config/test/render-app";
+import { AppToastProvider } from "@/shared/ui/toast/app-toast-provider.component";
+import { showAppToast } from "@/shared/ui/toast/app-toast-manager";
 
 const auctionUuid = "11111111-1111-4111-8111-111111111111";
 
@@ -186,9 +188,10 @@ describe("shared error and recovery states", () => {
     expect(attempts).toBe(2);
   });
 
-  it("keeps a rejected bid value and announces one global error toast", async () => {
-    server.use(
-      http.post("*/api/v1/auctions/:auctionUuid/bets", () =>
+  it.each([
+    {
+      name: "403",
+      response: () =>
         HttpResponse.json(
           {
             code: "bet_not_allowed",
@@ -200,10 +203,44 @@ describe("shared error and recovery states", () => {
             headers: { "Content-Type": "application/problem+json" },
           },
         ),
-      ),
-    );
+      inline: "Ставка больше недоступна. Обновите условия аукциона.",
+    },
+    {
+      name: "422",
+      response: () =>
+        HttpResponse.json(
+          {
+            code: "validation_failed",
+            title: "Ошибка валидации",
+            message: "Цена изменилась.",
+            errors: [
+              {
+                code: "next_price_not_reached",
+                field: "price",
+                message: "Доступная цена уже 30 500 ₽.",
+              },
+            ],
+          },
+          {
+            status: 422,
+            headers: { "Content-Type": "application/problem+json" },
+          },
+        ),
+      inline: "Доступная цена уже 30 500 ₽.",
+    },
+    {
+      name: "network",
+      response: () => HttpResponse.error(),
+      inline: "Не удалось отправить ставку. Попробуйте ещё раз.",
+    },
+  ])(
+    "keeps bid input and announces a $name error through one live channel",
+    async ({ inline, response }) => {
+      server.use(
+        http.post("*/api/v1/auctions/:auctionUuid/bets", response),
+      );
     const user = userEvent.setup();
-    const view = renderApp(`/auctions/${auctionUuid}/bet`);
+    renderApp(`/auctions/${auctionUuid}/bet`);
     const input = await screen.findByRole("textbox", {
       name: "Сумма ставки",
     });
@@ -212,22 +249,68 @@ describe("shared error and recovery states", () => {
     await user.type(input, "31000");
     await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Ставка больше недоступна. Обновите условия аукциона.",
-    );
+      expect(await screen.findByText(inline)).toBeInTheDocument();
     const toast = await screen.findByTestId("app-toast-viewport");
     expect(toast).toHaveTextContent("Ошибка ставки");
-    expect(toast).toHaveTextContent(
-      "Ставка не отправлена. Проверьте сообщение в форме и повторите.",
-    );
     expect(input).toHaveValue("31000");
+      expect(input.getAttribute("aria-describedby")).toContain(
+        inline.includes("30 500")
+          ? "set-bet-price-error"
+          : "set-bet-server-error",
+      );
+      expect(screen.queryAllByRole("alert")).toHaveLength(0);
+      expect(
+        document.querySelectorAll(
+          '.app-toast[role="alert"], .app-toast[role="status"], .app-toast[aria-live]',
+        ),
+      ).toHaveLength(0);
+      expect(
+        document.querySelectorAll(
+          '.set-bet-form__error[role], .set-bet-form__error[aria-live]',
+        ),
+      ).toHaveLength(0);
+      expect(
+        document.querySelectorAll(
+          '[data-testid="app-toast-viewport"][aria-live="polite"]',
+        ),
+      ).toHaveLength(1);
+    },
+  );
+
+  it("clears singleton toast state across a real provider unmount and remount", async () => {
+    const user = userEvent.setup();
+    const first = render(
+      <AppToastProvider>
+        <button
+          type="button"
+          onClick={() =>
+            showAppToast({
+              description: "Первое сообщение",
+              id: "provider-lifecycle",
+              title: "Первый toast",
+              tone: "success",
+            })
+          }
+        >
+          Показать первый
+        </button>
+      </AppToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Показать первый" }));
+    expect(await screen.findByText("Первый toast")).toBeInTheDocument();
     expect(screen.getAllByTestId("app-toast-viewport")).toHaveLength(1);
 
-    act(() => view.rerender(<AppProviders />));
+    first.unmount();
 
+    const second = render(
+      <AppToastProvider>
+        <span>Новый provider</span>
+      </AppToastProvider>,
+    );
     expect(screen.getAllByTestId("app-toast-viewport")).toHaveLength(1);
-    await waitFor(() => {
-      expect(screen.getAllByText("Ошибка ставки")).toHaveLength(1);
-    });
+    expect(screen.queryByText("Первый toast")).not.toBeInTheDocument();
+
+    second.unmount();
   });
 });

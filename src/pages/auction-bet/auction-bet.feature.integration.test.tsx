@@ -61,11 +61,15 @@ describe("auction place-bid feature", () => {
     await user.type(input, "31000");
     await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
 
+    const successToast = await screen.findByRole("dialog", {
+      name: "Ставка принята",
+    });
     expect(
-      await screen.findByRole("status", {
+      within(successToast).getByRole("heading", {
         name: "Ставка принята",
       }),
-    ).toHaveTextContent("31 000 ₽");
+    ).toBeInTheDocument();
+    expect(successToast).toHaveTextContent("31 000 ₽");
 
     await act(async () => {
       await router.navigate({
@@ -135,9 +139,9 @@ describe("auction place-bid feature", () => {
     await user.type(input, "31250");
     await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
 
-    expect(
-      await screen.findByText("Соблюдайте шаг ставки 500"),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Соблюдайте шаг ставки 500",
+    );
     expect(mutationRequests).toBe(0);
   });
 
@@ -241,13 +245,15 @@ describe("auction place-bid feature", () => {
     await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
 
     expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent(
-      "Ставка больше недоступна. Обновите условия аукциона.",
-    );
+      await screen.findByText(
+        "Ставка больше недоступна. Обновите условия аукциона.",
+      ),
+    ).toBeInTheDocument();
     expect(input).toHaveValue("31000");
     expect(
-      screen.queryByRole("status", { name: "Ставка принята" }),
+      within(screen.getByTestId("app-toast-viewport")).queryByRole("heading", {
+        name: "Ставка принята",
+      }),
     ).not.toBeInTheDocument();
     expect(
       queryClient.getQueryState(detailQueryKey)?.isInvalidated,
@@ -293,12 +299,16 @@ describe("auction place-bid feature", () => {
     await user.type(input, "31000");
     await user.click(screen.getByRole("button", { name: "Сделать ставку" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Не удалось отправить ставку. Попробуйте ещё раз.",
-    );
+    expect(
+      await screen.findByText(
+        "Не удалось отправить ставку. Попробуйте ещё раз.",
+      ),
+    ).toBeInTheDocument();
     expect(input).toHaveValue("31000");
     expect(
-      screen.queryByRole("status", { name: "Ставка принята" }),
+      within(screen.getByTestId("app-toast-viewport")).queryByRole("heading", {
+        name: "Ставка принята",
+      }),
     ).not.toBeInTheDocument();
     expect(
       queryClient.getQueryState(detailQueryKey)?.isInvalidated,
@@ -364,7 +374,9 @@ describe("auction place-bid feature", () => {
 
     await waitFor(() => expect(submit).toBeDisabled());
     expect(
-      await screen.findByRole("status", { name: "Ставка принята" }),
+      within(
+        await screen.findByRole("dialog", { name: "Ставка принята" }),
+      ).getByRole("heading", { name: "Ставка принята" }),
     ).toBeInTheDocument();
     expect(mutationRequests).toBe(1);
   });

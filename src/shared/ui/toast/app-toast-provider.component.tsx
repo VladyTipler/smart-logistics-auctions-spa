@@ -24,7 +24,6 @@ function AppToastViewport() {
               aria-label={String(toast.title)}
               className={`app-toast app-toast--${isError ? "error" : "success"}`}
               key={toast.id}
-              role="status"
               toast={toast}
             >
               <span className="app-toast__icon" aria-hidden="true">

@@ -1,11 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { auctionSearchSchema } from "./auction-search.schema";
 import { buildAuctionListRequest } from "./build-auction-list-request";
 
-vi.stubEnv("TZ", "Europe/Chisinau");
+const initialTimezone = import.meta.env.TZ;
 
 describe("buildAuctionListRequest", () => {
+  beforeAll(() => {
+    vi.stubEnv("TZ", "Europe/Chisinau");
+  });
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+    expect(import.meta.env.TZ).toBe(initialTimezone);
+  });
+
   it("maps normalized URL state to the generated API contract", () => {
     const search = auctionSearchSchema.parse({
       page: "2",

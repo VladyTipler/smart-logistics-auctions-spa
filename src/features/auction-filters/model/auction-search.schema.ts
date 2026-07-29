@@ -22,16 +22,21 @@ function firstValue(value: unknown): unknown {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function positiveInteger(value: unknown, fallback: number): number {
-  const candidate = firstValue(value);
-  const parsed =
-    typeof candidate === "number"
-      ? candidate
-      : typeof candidate === "string" && candidate.trim() !== ""
-        ? Number(candidate)
-        : Number.NaN;
+function base10PositiveInteger(value: unknown): number | undefined {
+  if (typeof value === "number") {
+    return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+  }
 
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+  if (typeof value !== "string" || !/^\d+$/.test(value.trim())) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value.trim(), 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function positiveInteger(value: unknown, fallback: number): number {
+  return base10PositiveInteger(firstValue(value)) ?? fallback;
 }
 
 function arrayValues(value: unknown): unknown[] {
@@ -56,16 +61,8 @@ function integerArray(
   isAllowed: (item: number) => boolean = () => true,
 ): number[] | undefined {
   const values = arrayValues(value)
-    .map((item) =>
-      typeof item === "number"
-        ? item
-        : typeof item === "string" && item.trim() !== ""
-          ? Number(item)
-          : Number.NaN,
-    )
-    .filter(
-      (item) => Number.isInteger(item) && item > 0 && isAllowed(item),
-    );
+    .map(base10PositiveInteger)
+    .filter((item): item is number => item !== undefined && isAllowed(item));
 
   return values.length > 0 ? values : undefined;
 }

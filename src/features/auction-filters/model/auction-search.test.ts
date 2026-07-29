@@ -8,6 +8,8 @@ describe("auctionSearchSchema", () => {
     [{ page: "3", perPage: "25" }, { page: 3, perPage: 25 }],
     [{ page: "oops", perPage: "0" }, { page: 1, perPage: 10 }],
     [{ page: "-2", perPage: "2.5" }, { page: 1, perPage: 10 }],
+    [{ page: "0x10", perPage: "1e2" }, { page: 1, perPage: 10 }],
+    [{ page: "0b10", perPage: "0x20" }, { page: 1, perPage: 10 }],
     [{ page: ["4"], perPage: ["50"] }, { page: 4, perPage: 50 }],
   ])("normalizes pagination %#", (input, expected) => {
     expect(auctionSearchSchema.parse(input)).toMatchObject(expected);
@@ -33,7 +35,7 @@ describe("auctionSearchSchema", () => {
     expect(
       auctionSearchSchema.parse({
         status: ["Leading", "invalid", "", 3],
-        statuses: ["2", "bad", "4.5", "-1"],
+        statuses: ["2", "bad", "4.5", "-1", "0x10", "0b10", "1e2"],
         aucType: ["Request", "Unknown", "Down", "invalid"],
       }),
     ).toMatchObject({

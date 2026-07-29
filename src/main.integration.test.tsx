@@ -8,6 +8,10 @@ vi.mock("react-dom/client", () => ({
   createRoot: () => ({ render }),
 }));
 
+vi.mock("@/app/app.component", () => ({
+  App: () => null,
+}));
+
 vi.mock("@/shared/api/mocks/browser", () => ({
   worker: { start: configuredWorkerStart },
 }));

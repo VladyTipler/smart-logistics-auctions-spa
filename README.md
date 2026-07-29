@@ -96,6 +96,7 @@ MSW реализует реальные HTTP-сценарии `/api/v1`:
 | E2E desktop | фильтр → детали → ставка → обновлённые детали и история |
 | E2E mobile | Drawer → фильтр → sticky action → ставка |
 | E2E guards | недоступная ставка, скрытая история без запроса, отсутствие contacts/address/cargo value/place |
+| Production build | четыре ленивых route chunks, entry budget до 500 KiB и отсутствие MSW-артефактов |
 
 Подробный ручной UI/a11y отчёт и все выбранные скриншоты: [`docs/verification/ui-review.md`](docs/verification/ui-review.md).
 
@@ -118,6 +119,6 @@ MSW реализует реальные HTTP-сценарии `/api/v1`:
 - `npm audit --omit=dev` не находит уязвимостей; полный audit сообщает о 4 high severity advisory в dev-only цепочке генератора OpenAPI.
 - E2E выполняются в Chromium desktop/mobile emulation; реальные iOS Safari и Android устройства не проверялись.
 - Автоматического accessibility scanner нет; семантика, focus order, contrast, reduced motion и overflow проверялись вручную и сценарными тестами.
-- Route-level code splitting не добавлялся: для объёма тестового проекта приоритет отдан контракту, поведению и тестам.
+- Четыре route-level экрана загружаются лениво. Финальный entry chunk — 342.56 kB / 105.76 kB gzip; build падает, если entry превысит 500 KiB, исчезнет route chunk или в production попадёт MSW.
 
 Описание использования AI: [`AI_USAGE.md`](AI_USAGE.md).

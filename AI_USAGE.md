@@ -22,6 +22,7 @@ AI использовался как инженерный ассистент: д
 - единая access policy с удалением закрытых данных до передачи в компоненты;
 - stateful MSW + query invalidation вместо оптимистических обновлений;
 - feature integration и E2E как основная гарантия работоспособности, unit — только для чистой логики;
+- route-level lazy loading четырёх экранов с проверяемым entry budget 500 KiB;
 - TypeScript 5.9 вместо предложенного TypeScript 7 из-за peer-контракта `openapi-typescript`.
 
 ## Отклонённые предложения
@@ -43,7 +44,7 @@ AI использовался как инженерный ассистент: д
 - отсутствие закрытых данных в ViewModel/UI и отсутствие history-запроса при запрете;
 - `401`, `404`, `422`, `503`, network recovery и сохранение введённой ставки;
 - keyboard focus, Drawer focus trap/restore, mobile sticky action, contrast, reduced motion и горизонтальный overflow;
-- production build на отсутствие browser MSW worker/chunks и служебных маркеров.
+- production build на четыре независимых route chunks, entry budget и отсутствие browser MSW worker/chunks и служебных маркеров.
 
 ## Оставшиеся риски
 
@@ -60,5 +61,5 @@ AI использовался как инженерный ассистент: д
 - прогнал реальные Safari/Firefox и физический mobile device;
 - добавил axe scan и проверку high-contrast/forced-colors;
 - выполнил contract smoke against staging API при наличии доступа;
-- добавил route-level code splitting и проверил bundle budget;
+- добавил автоматические Lighthouse budgets и visual-regression baseline;
 - расширил fixtures property-based тестами decimal/date/filter границ и конкурентных ставок.

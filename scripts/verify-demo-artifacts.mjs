@@ -155,7 +155,10 @@ if (!dynamicallyReachableKeys.has(mswBrowserChunk.key)) {
   );
 }
 
-if (eagerlyReachableKeys.has(mswBrowserChunk.key)) {
+if (
+  indexHtml.includes(mswBrowserChunk.output) ||
+  eagerlyReachableKeys.has(mswBrowserChunk.key)
+) {
   throw new Error(
     `MSW browser source "${mswBrowserSource}" is eagerly reachable from manifest entry "${entryKey}".`,
   );

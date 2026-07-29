@@ -33,6 +33,7 @@ async function createFixture({
   entryDynamicImports = [mswBrowserSource, ...routeSources],
   entryImports = [],
   includeMswBrowserEntry = true,
+  includeMswBrowserScript = false,
   mswBrowserIsDynamicEntry = true,
   nonDynamicRouteSource,
   omittedRouteSource,
@@ -67,7 +68,12 @@ async function createFixture({
 
   await writeFile(
     path.join(distDirectory, "index.html"),
-    `<script type="module" src="${baseUrl}${entryFile}"></script>`,
+    [
+      `<script type="module" src="${baseUrl}${entryFile}"></script>`,
+      includeMswBrowserScript
+        ? `<script type="module" src="${repositoryBase}assets/msw-browser.js"></script>`
+        : "",
+    ].join(""),
   );
   await writeFile(path.join(distDirectory, entryFile), "demo entry");
 
@@ -228,6 +234,19 @@ test("rejects an MSW browser source that is not a dynamic entry", async () => {
 test("rejects an eagerly reachable MSW browser chunk", async () => {
   await withFixture(
     { entryImports: [mswBrowserSource] },
+    ({ status, stderr, stdout }) => {
+      assert.notEqual(status, 0, stdout);
+      assert.match(
+        stderr,
+        /MSW browser source "src\/shared\/api\/mocks\/browser\.ts" is eagerly reachable from manifest entry "src\/main\.tsx"/i,
+      );
+    },
+  );
+});
+
+test("rejects an MSW browser chunk loaded directly by index.html", async () => {
+  await withFixture(
+    { includeMswBrowserScript: true },
     ({ status, stderr, stdout }) => {
       assert.notEqual(status, 0, stdout);
       assert.match(

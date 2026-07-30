@@ -5,7 +5,9 @@ import { configure, render } from "@testing-library/react";
 import { AppProviders } from "@/app/providers/app-providers.component";
 import { createAppRouter } from "@/app/router/router";
 
-configure({ asyncUtilTimeout: 3_000 });
+// Route components stay genuinely lazy; cold parallel transforms can exceed
+// Testing Library's short default without indicating an application failure.
+configure({ asyncUtilTimeout: 10_000 });
 
 const originalScrollTo = window.scrollTo;
 

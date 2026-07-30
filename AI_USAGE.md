@@ -50,6 +50,7 @@ AI использовался как инженерный ассистент: д
 - production build на четыре независимых route chunks, entry budget и отсутствие browser MSW worker/chunks и служебных маркеров.
 - локальный Pages topology: repository base, прямой hash route, переход в детали и reload со stateful browser MSW;
 - структурный контракт workflow: `main`/manual triggers, минимальные Pages permissions, полные quality gates, `dist-demo` artifact и защищённый deploy job.
+- публичный Pages deploy: полный GitHub Actions run и live smoke со ставкой, hash-навигацией, reload и подтверждённым Service Worker interception.
 
 ## Оставшиеся риски
 
@@ -58,12 +59,11 @@ AI использовался как инженерный ассистент: д
 - browser-проверки ограничены Chromium и viewport emulation;
 - нет автоматизированного axe/Accessibility Insights gate;
 - mock-state неперсистентный и не моделирует конкурентные ставки нескольких клиентов;
-- публичный Pages deployment и live URL ещё не проверены: это acceptance после merge/push;
 - большие production-данные и сетевые профили вне локальных сценариев не измерялись.
 
 ## Что улучшил бы ещё за один день
 
-- проверил первый публичный Pages deployment и live URL после merge;
+- добавил регулярный внешний availability smoke для публичного demo;
 - прогнал реальные Safari/Firefox и физический mobile device;
 - добавил axe scan и проверку high-contrast/forced-colors;
 - выполнил contract smoke against staging API при наличии доступа;

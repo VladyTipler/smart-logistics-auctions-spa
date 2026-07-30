@@ -22,6 +22,7 @@ interface AuctionSeed {
   id: number;
   isAvailable: boolean;
   isBidder: boolean;
+  lastBet?: number;
   loadCity: string;
   loadCityId: number;
   loadDate: string;
@@ -38,6 +39,7 @@ interface AuctionSeed {
     | "Losing"
     | "Winner"
     | "Confirmed";
+  startPrice?: number;
   unloadCity: string;
   unloadCityId: number;
 }
@@ -192,9 +194,11 @@ const seeds: readonly AuctionSeed[] = [
     bodyType: "цельнометаллический",
     currentPrice: 48_000,
     available: 48_500,
+    startPrice: 45_000,
     canSetBet: true,
     isAvailable: true,
     isBidder: true,
+    lastBet: 48_000,
   },
   {
     id: 108,
@@ -261,6 +265,7 @@ const seeds: readonly AuctionSeed[] = [
     canSetBet: true,
     isAvailable: true,
     isBidder: true,
+    lastBet: 62_500,
   },
   {
     id: 111,
@@ -368,9 +373,11 @@ const seeds: readonly AuctionSeed[] = [
     bodyType: "цельнометаллический",
     currentPrice: 46_500,
     available: 47_000,
+    startPrice: 43_500,
     canSetBet: true,
     isAvailable: true,
     isBidder: true,
+    lastBet: 46_500,
   },
   {
     id: 116,
@@ -441,6 +448,8 @@ const seeds: readonly AuctionSeed[] = [
 ];
 
 function createFixture(seed: AuctionSeed): AuctionFixture {
+  const lastBet = seed.isBidder ? (seed.lastBet ?? seed.currentPrice) : null;
+  const startPrice = seed.startPrice ?? seed.currentPrice + 3_000;
   const listItem: AuctionListItem = {
     main: {
       id: seed.id,
@@ -501,13 +510,13 @@ function createFixture(seed: AuctionSeed): AuctionFixture {
       is_accredited: true,
       is_favorite: false,
       price: {
-        start: seed.currentPrice + 3_000,
+        start: startPrice,
         current: seed.currentPrice,
         current_no_vat: seed.currentPrice / 1.2,
       },
       your: {
         bet: seed.isBidder,
-        last_bet: seed.isBidder ? seed.currentPrice : null,
+        last_bet: lastBet,
       },
     },
     payment: {
@@ -578,8 +587,8 @@ function createFixture(seed: AuctionSeed): AuctionFixture {
       is_bidder: seed.isBidder,
       is_favorite: false,
       price: {
-        start: seed.currentPrice + 3_000,
-        start_no_vat: (seed.currentPrice + 3_000) / 1.2,
+        start: startPrice,
+        start_no_vat: startPrice / 1.2,
         current: seed.currentPrice,
         current_no_vat: seed.currentPrice / 1.2,
         available: seed.available,
@@ -592,8 +601,8 @@ function createFixture(seed: AuctionSeed): AuctionFixture {
       },
       your: {
         bet: seed.isBidder,
-        last_bet: seed.isBidder ? seed.currentPrice : null,
-        last_bet_with_vat: seed.isBidder ? seed.currentPrice : null,
+        last_bet: lastBet,
+        last_bet_with_vat: lastBet,
         win: seed.statusMobile === "Winner",
       },
       settings: { prolong_after_bet: 10 },
@@ -724,6 +733,70 @@ export const betFixtures: readonly BetItem[] = [
     organization_name: "ООО Перевозчик",
     is_rejected: false,
     place: 1,
+    cancel_reason: "",
+  },
+  {
+    id: 5,
+    created_at: "2026-07-29T11:40:00+03:00",
+    auction_id: 107,
+    subscriber_id: 13,
+    price_with_vat: 48_000,
+    price_no_vat: 48_000 / 1.2,
+    organization_id: 14,
+    organization_name: "ООО Перевозчик",
+    is_rejected: false,
+    is_counter: false,
+    place: 1,
+    is_win: false,
+    run_number: 0,
+    cancel_reason: "",
+  },
+  {
+    id: 6,
+    created_at: "2026-07-29T11:35:00+03:00",
+    auction_id: 110,
+    subscriber_id: 13,
+    price_with_vat: 62_500,
+    price_no_vat: 62_500 / 1.2,
+    organization_id: 14,
+    organization_name: "ООО Перевозчик",
+    is_rejected: false,
+    is_counter: false,
+    place: 2,
+    is_win: false,
+    run_number: 0,
+    cancel_reason: "",
+  },
+  {
+    id: 7,
+    created_at: "2026-07-29T11:34:00+03:00",
+    auction_id: 110,
+    subscriber_id: 77,
+    price_with_vat: 62_000,
+    price_no_vat: 62_000 / 1.2,
+    organization_id: 770,
+    organization_name: "Fast Freight",
+    is_rejected: false,
+    is_counter: false,
+    place: 1,
+    is_win: false,
+    run_number: 0,
+    cancel_reason: "",
+  },
+  {
+    id: 8,
+    created_at: "2026-07-29T11:30:00+03:00",
+    auction_id: 115,
+    subscriber_id: 13,
+    price_with_vat: 46_500,
+    price_no_vat: 46_500 / 1.2,
+    organization_id: 14,
+    organization_name: "ООО Перевозчик",
+    is_rejected: false,
+    is_counter: false,
+    place: 1,
+    is_win: false,
+    run_number: 0,
     cancel_reason: "",
   },
 ];

@@ -23,6 +23,9 @@ const API_ORIGIN = "http://localhost";
 const ALLOWED_AUCTION_UUID = "11111111-1111-4111-8111-111111111111";
 const HIDDEN_HISTORY_UUID = "44444444-4444-4444-8444-444444444444";
 const FORBIDDEN_AUCTION_UUID = "55555555-5555-4555-8555-555555555555";
+const ACTIVE_UP_AUCTION_UUID = "00000007-0000-4000-8000-000000000007";
+const SECOND_ACTIVE_UP_AUCTION_UUID =
+  "00000015-0000-4000-8000-000000000015";
 
 const client = createHttpClient({
   baseUrl: `${API_ORIGIN}/api/v1`,
@@ -309,6 +312,69 @@ describe("stateful auction mock backend", () => {
       bets: [],
     });
   });
+
+  it.each([
+    ["SL-1007", ACTIVE_UP_AUCTION_UUID, 48_000],
+    ["SL-1010", "00000010-0000-4000-8000-000000000010", 62_500],
+    ["SL-1015", SECOND_ACTIVE_UP_AUCTION_UUID, 46_500],
+  ])(
+    "keeps %s bidder snapshots coherent with HTTP bid history",
+    async (cargoNum, auctionUuid, expectedLastBet) => {
+      const [list, detail, history] = await Promise.all([
+        listAuctions({ cargo_num: cargoNum }),
+        getAuction(auctionUuid),
+        getBets(auctionUuid, true),
+      ]);
+
+      expect(list.data).toHaveLength(1);
+      expect(list.data?.[0]?.trading?.your?.last_bet).toBe(expectedLastBet);
+      expect(detail.trading.your?.last_bet).toBe(expectedLastBet);
+      expect(history.bets).not.toHaveLength(0);
+      expect(history.bets).toContainEqual(
+        expect.objectContaining({
+          subscriber_id: 13,
+          price_with_vat: expectedLastBet,
+          is_rejected: false,
+        }),
+      );
+    },
+  );
+
+  it.each([
+    ["SL-1007", ACTIVE_UP_AUCTION_UUID, 45_000, 48_000, 48_500],
+    [
+      "SL-1015",
+      SECOND_ACTIVE_UP_AUCTION_UUID,
+      43_500,
+      46_500,
+      47_000,
+    ],
+  ])(
+    "serves a coherent active Up price ladder for %s",
+    async (cargoNum, auctionUuid, start, current, available) => {
+      const [list, detail] = await Promise.all([
+        listAuctions({ cargo_num: cargoNum }),
+        getAuction(auctionUuid),
+      ]);
+
+      expect(list.data).toHaveLength(1);
+      expect(list.data?.[0]?.trading?.price).toMatchObject({ start, current });
+      expect(detail.main.auc_type).toBe("Up");
+      expect(detail.trading.price).toMatchObject({
+        start,
+        current,
+        available,
+        step: 500,
+      });
+      expect(detail.trading.price?.start).toBeLessThan(
+        detail.trading.price?.current ?? Number.NEGATIVE_INFINITY,
+      );
+      expect(detail.trading.price?.available).toBe(
+        (detail.trading.price?.current ?? 0) +
+          (detail.trading.price?.step ?? 0),
+      );
+    },
+  );
 
   it("updates list, detail, history, user status, availability, and ranks after a bid", async () => {
     const before = await listAuctions({ cargo_num: "SL-1001" });

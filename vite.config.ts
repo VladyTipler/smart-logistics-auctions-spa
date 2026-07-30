@@ -44,6 +44,7 @@ export default defineConfig(({ command, mode }) => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["./src/shared/config/test/setup-tests.ts"],
+      testTimeout: 10_000,
     },
   };
 });

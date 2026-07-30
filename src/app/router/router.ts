@@ -1,4 +1,5 @@
 import {
+  createHashHistory,
   createRouter,
   parseSearchWith,
   stringifySearchWith,
@@ -12,6 +13,7 @@ import { auctionBetsRoute } from "@/app/router/auction-bets.route";
 import { auctionDetailRoute } from "@/app/router/auction-detail.route";
 import { auctionsRoute } from "@/app/router/auctions.route";
 import { rootRoute } from "@/app/router/root.route";
+import { runtimeConfig } from "@/shared/config/runtime-config";
 
 const routeTree = rootRoute.addChildren([
   auctionsRoute,
@@ -50,9 +52,15 @@ export function createAppRouter({
   history,
   queryClient = appQueryClient,
 }: CreateAppRouterOptions = {}) {
+  const resolvedHistory =
+    history ??
+    (runtimeConfig.routerHistory === "hash"
+      ? createHashHistory()
+      : undefined);
+
   return createRouter({
     routeTree,
-    history,
+    history: resolvedHistory,
     context: { queryClient },
     parseSearch: parseAppSearch,
     stringifySearch: stringifyAppSearch,

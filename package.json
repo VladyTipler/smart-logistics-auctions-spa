@@ -9,13 +9,15 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node ./scripts/verify-production-artifacts.mjs",
+    "build:demo": "tsc -b && vite build --mode demo && node ./scripts/verify-demo-artifacts.mjs",
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run && npm run test:artifacts",
-    "test:artifacts": "node --test ./scripts/verify-production-artifacts.test.mjs",
+    "test:artifacts": "node --test ./scripts/artifact-verifier-core.test.mjs ./scripts/verify-production-artifacts.test.mjs ./scripts/verify-demo-artifacts.test.mjs ./scripts/verify-pages-workflow.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:demo": "npm run build:demo && playwright test --config=playwright.demo.config.ts",
     "api:generate": "openapi-typescript ./openapi.auctions.v0.json -o ./src/shared/api/generated/auctions-api.ts"
   },
   "dependencies": {

@@ -9,6 +9,7 @@ AI использовался как инженерный ассистент: д
 - реализация typed HTTP boundary, stateful MSW, FSD-срезов и UI;
 - составление unit, feature integration и Playwright сценариев;
 - ревью accessibility, responsive behavior, ошибок, guard-политики и repository hygiene;
+- проектирование изолированного GitHub Pages demo build, hash routing и CI/CD workflow;
 - подготовка документации и списка остаточных рисков.
 
 Скилл `frontend-design` помог сформировать визуальную систему Dispatch Board: палитру, типографику, route rail и правила плотности интерфейса. Кандидат лично утвердил архитектуру, границы FSD, трактовку guard-флагов, стратегию тестирования и приоритет интеграционных сценариев.
@@ -23,6 +24,8 @@ AI использовался как инженерный ассистент: д
 - stateful MSW + query invalidation вместо оптимистических обновлений;
 - feature integration и E2E как основная гарантия работоспособности, unit — только для чистой логики;
 - route-level lazy loading четырёх экранов с проверяемым entry budget 500 KiB;
+- отдельный `demo` mode для Pages со stateful browser MSW и hash history без изменения production API boundary;
+- GitHub Actions deployment только после lint, typecheck, Vitest/artifact contracts, production build, обычных E2E и Pages smoke;
 - TypeScript 5.9 вместо предложенного TypeScript 7 из-за peer-контракта `openapi-typescript`.
 
 ## Отклонённые предложения
@@ -45,6 +48,8 @@ AI использовался как инженерный ассистент: д
 - `401`, `404`, `422`, `503`, network recovery и сохранение введённой ставки;
 - keyboard focus, Drawer focus trap/restore, mobile sticky action, contrast, reduced motion и горизонтальный overflow;
 - production build на четыре независимых route chunks, entry budget и отсутствие browser MSW worker/chunks и служебных маркеров.
+- локальный Pages topology: repository base, прямой hash route, переход в детали и reload со stateful browser MSW;
+- структурный контракт workflow: `main`/manual triggers, минимальные Pages permissions, полные quality gates, `dist-demo` artifact и защищённый deploy job.
 
 ## Оставшиеся риски
 
@@ -53,11 +58,12 @@ AI использовался как инженерный ассистент: д
 - browser-проверки ограничены Chromium и viewport emulation;
 - нет автоматизированного axe/Accessibility Insights gate;
 - mock-state неперсистентный и не моделирует конкурентные ставки нескольких клиентов;
+- публичный Pages deployment и live URL ещё не проверены: это acceptance после merge/push;
 - большие production-данные и сетевые профили вне локальных сценариев не измерялись.
 
 ## Что улучшил бы ещё за один день
 
-- подключил CI с lint, typecheck, Vitest, production artifact check и Playwright;
+- проверил первый публичный Pages deployment и live URL после merge;
 - прогнал реальные Safari/Firefox и физический mobile device;
 - добавил axe scan и проверку high-contrast/forced-colors;
 - выполнил contract smoke against staging API при наличии доступа;

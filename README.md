@@ -10,6 +10,12 @@ SPA для работы диспетчера с грузовыми аукцио�
   <img src="docs/verification/screenshots/history-320.png" alt="История ставок на мобильном экране" width="260">
 </p>
 
+**Live demo:** [vladytipler.github.io/smart-logistics-auctions-spa/#/auctions](https://vladytipler.github.io/smart-logistics-auctions-spa/#/auctions)
+
+GitHub Pages публикует изолированный `demo` build. В нём browser MSW предоставляет stateful mock API: ставка согласованно меняет список, детали и историю в рамках открытой страницы, а перезагрузка сбрасывает mock-state. Hash routing (`#/auctions/...`) позволяет открывать и перезагружать вложенные маршруты на статическом хостинге.
+
+Это SPA, не PWA: Service Worker используется только для перехвата mock HTTP-запросов, без установки приложения и offline cache. Обычный production build остаётся отдельным: не содержит MSW и обращается к реальному API boundary `/api/v1`.
+
 ## Запуск
 
 Требования: Node.js `^20.19.0` или `>=22.12.0`, npm.
@@ -29,14 +35,19 @@ Vite запустит dev-server; приложение нужно открыть
 | `npm run api:generate` | обновить TypeScript DTO из OpenAPI |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript project references |
-| `npm test` | unit и feature integration тесты |
+| `npm test` | unit, feature integration и artifact/workflow contract тесты |
+| `npm run test:artifacts` | Node-тесты production/demo артефактов и Pages workflow |
 | `npm run test:coverage` | тесты с coverage |
 | `npm run test:e2e` | Playwright: desktop и mobile Chromium |
+| `npm run test:e2e:demo` | self-contained demo build + Chromium smoke для Pages topology |
 | `npm run build` | typecheck, production build и проверка отсутствия MSW в артефактах |
+| `npm run build:demo` | изолированный `dist-demo` с repository base и browser MSW |
 
 Перед первым E2E-запуском может понадобиться `npx playwright install chromium`.
 
 ## Маршруты
+
+Локально и с реальным backend используются обычные pathname URL. В Pages demo те же маршруты находятся после `#`, например `#/auctions/:auctionUuid`.
 
 | URL | Экран |
 | --- | --- |
@@ -97,6 +108,8 @@ MSW реализует реальные HTTP-сценарии `/api/v1`:
 | E2E mobile | Drawer → фильтр → sticky action → ставка |
 | E2E guards | недоступная ставка, скрытая история без запроса, отсутствие contacts/address/cargo value/place |
 | Production build | четыре ленивых route chunks, entry budget до 500 KiB и отсутствие MSW-артефактов |
+| Pages demo | repository subpath, hash route, browser MSW, detail navigation и reload |
+| Pages workflow | триггеры, permissions, полные gates, `dist-demo` upload и защищённый deploy job |
 
 Подробный ручной UI/a11y отчёт и все выбранные скриншоты: [`docs/verification/ui-review.md`](docs/verification/ui-review.md).
 
@@ -116,6 +129,7 @@ MSW реализует реальные HTTP-сценарии `/api/v1`:
 
 - Реального backend и auth-flow нет; mock-state живёт только в runtime страницы и сбрасывается после перезагрузки.
 - Production bundle намеренно не содержит MSW и ожидает доступный `/api/v1`.
+- Pages demo использует неперсистентный mock API; это не staging-интеграция с реальным backend.
 - `npm audit --omit=dev` не находит уязвимостей; полный audit сообщает о 4 high severity advisory в dev-only цепочке генератора OpenAPI.
 - E2E выполняются в Chromium desktop/mobile emulation; реальные iOS Safari и Android устройства не проверялись.
 - Автоматического accessibility scanner нет; семантика, focus order, contrast, reduced motion и overflow проверялись вручную и сценарными тестами.

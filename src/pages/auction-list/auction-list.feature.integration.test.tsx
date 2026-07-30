@@ -36,7 +36,7 @@ describe("auction list feature", () => {
       await screen.findByRole("link", { name: /SL-1001/ }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(2);
-    expect(screen.getByText("Найдено: 5")).toBeInTheDocument();
+    expect(screen.getByText("Найдено: 18")).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "Страницы аукционов" }),
     ).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe("auction list feature", () => {
     const user = userEvent.setup();
     const { router } = renderApp("/auctions");
 
-    await screen.findByText("Найдено: 5");
+    await screen.findByText("Найдено: 18");
     const loadCity = screen.getByRole("combobox", {
       name: "Город погрузки",
     });
@@ -117,7 +117,7 @@ describe("auction list feature", () => {
   it("opens mobile filters as a labelled dialog and restores focus on close", async () => {
     const user = userEvent.setup();
     renderApp("/auctions");
-    await screen.findByText("Найдено: 5");
+    await screen.findByText("Найдено: 18");
 
     const trigger = screen.getByRole("button", { name: "Фильтры" });
     await user.click(trigger);
@@ -146,7 +146,7 @@ describe("auction list feature", () => {
     });
     const user = userEvent.setup();
     const { router } = renderApp("/auctions");
-    await screen.findByText("Найдено: 5");
+    await screen.findByText("Найдено: 18");
 
     const cargoNumber = screen.getByRole("textbox", {
       name: "Номер груза",
@@ -189,7 +189,7 @@ describe("auction list feature", () => {
     });
     const user = userEvent.setup();
     const { router } = renderApp("/auctions");
-    await screen.findByText("Найдено: 5");
+    await screen.findByText("Найдено: 18");
 
     const trigger = screen.getByRole("button", { name: "Фильтры" });
     await user.click(trigger);
@@ -247,22 +247,38 @@ describe("auction list feature", () => {
     ).toHaveValue("");
   });
 
-  it("changes page through semantic pagination", async () => {
+  it("renders both default pages through semantic pagination", async () => {
     const user = userEvent.setup();
-    const { router } = renderApp("/auctions?perPage=2");
+    const { router } = renderApp("/auctions");
 
-    await screen.findByRole("link", { name: /SL-1001/ });
+    await screen.findByText("Найдено: 18");
+    expect(screen.getAllByRole("article")).toHaveLength(10);
     await user.click(screen.getByRole("link", { name: "Страница 2" }));
 
     await waitFor(() => {
       expect(router.state.location.search).toMatchObject({
         page: 2,
-        perPage: 2,
+        perPage: 10,
       });
     });
+    await screen.findByText("SL-1011");
+
+    const secondPageCards = screen.getAllByRole("article");
+    expect(secondPageCards).toHaveLength(8);
     expect(
-      await screen.findByRole("link", { name: /SL-1003/ }),
-    ).toBeInTheDocument();
+      secondPageCards.map(
+        (card) => within(card).getByText(/^SL-\d{4}$/).textContent,
+      ),
+    ).toEqual([
+      "SL-1011",
+      "SL-1012",
+      "SL-1013",
+      "SL-1014",
+      "SL-1015",
+      "SL-1016",
+      "SL-1017",
+      "SL-1018",
+    ]);
   });
 
   it("prefetches auction detail on card hover intent", async () => {

@@ -66,7 +66,7 @@ test("keeps the stateful Pages demo functional across hash navigation and reload
         `${PAGES_REPOSITORY_BASE_PATH}#/auctions(?:\\?.*)?$`,
       ),
     );
-    await expect(page.getByText("Найдено: 5")).toBeVisible();
+    await expect(page.getByText("Найдено: 18")).toBeVisible();
     await expect(page.getByText("SL-1001", { exact: true })).toBeVisible();
     await expect
       .poll(() =>

@@ -88,21 +88,21 @@ describe("stateful auction mock backend", () => {
     expect(response.meta).toEqual({
       current_page: 1,
       from: 1,
-      last_page: 3,
+      last_page: 9,
       per_page: 2,
       to: 2,
-      total: 5,
+      total: 18,
     });
   });
 
   it("treats an omitted optional list body as empty filters", async () => {
     const response = await client.post<AuctionListResponse>("/auctions/list");
 
-    expect(response.data).toHaveLength(5);
+    expect(response.data).toHaveLength(18);
     expect(response.meta).toMatchObject({
       current_page: 1,
       per_page: 20,
-      total: 5,
+      total: 18,
     });
   });
 
@@ -153,11 +153,34 @@ describe("stateful auction mock backend", () => {
       current_page: 2,
       from: 3,
       to: 4,
-      total: 5,
+      total: 18,
     });
     expect(secondPage.data?.[0]?.main?.order_uid).not.toBe(
       firstPage.data?.[0]?.main?.order_uid,
     );
+  });
+
+  it("returns the final eight auctions in deterministic order on default page 2", async () => {
+    const response = await listAuctions({ page: 2, per_page: 10 });
+
+    expect(response.data?.map((auction) => auction.main?.cargo_num)).toEqual([
+      "SL-1011",
+      "SL-1012",
+      "SL-1013",
+      "SL-1014",
+      "SL-1015",
+      "SL-1016",
+      "SL-1017",
+      "SL-1018",
+    ]);
+    expect(response.meta).toEqual({
+      current_page: 2,
+      from: 11,
+      last_page: 2,
+      per_page: 10,
+      to: 18,
+      total: 18,
+    });
   });
 
   it.each([

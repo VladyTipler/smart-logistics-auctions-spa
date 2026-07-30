@@ -248,6 +248,7 @@ a {
 
 .filter-field {
   display: grid;
+  min-width: 0;
   gap: 0.45rem;
   color: rgb(21 35 45 / 70%);
   font-size: 0.75rem;
@@ -304,6 +305,8 @@ a {
 }
 
 .combobox-control {
+  width: 100%;
+  min-width: 0;
   padding-inline: 0.8rem 0.35rem;
 }
 

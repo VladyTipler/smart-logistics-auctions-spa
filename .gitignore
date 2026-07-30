@@ -1,4 +1,6 @@
 /.worktrees/
+/.playwright-mcp/
+/task9-bet-*.png
 *.pdf
 node_modules/
 dist/

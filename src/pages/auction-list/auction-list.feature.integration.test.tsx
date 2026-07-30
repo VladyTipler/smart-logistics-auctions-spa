@@ -114,6 +114,57 @@ describe("auction list feature", () => {
     });
   });
 
+  it("filters the new SL-1007 route through accessible comboboxes", async () => {
+    const bodies: Promise<unknown>[] = [];
+    server.events.on("request:start", ({ request }) => {
+      if (request.method === "POST") {
+        bodies.push(request.clone().json());
+      }
+    });
+    const user = userEvent.setup();
+    const { router } = renderApp("/auctions");
+
+    await screen.findByRole("link", { name: /SL-1001/ });
+    const loadCity = screen.getByRole("combobox", {
+      name: "Город погрузки",
+    });
+    await user.click(loadCity);
+    await user.type(loadCity, "Льв");
+    await user.click(
+      await screen.findByRole("option", { name: "Львов" }, { timeout: 1_000 }),
+    );
+
+    const unloadCity = screen.getByRole("combobox", {
+      name: "Город выгрузки",
+    });
+    await user.click(unloadCity);
+    await user.type(unloadCity, "Крак");
+    await user.click(
+      await screen.findByRole("option", { name: "Краков" }, { timeout: 1_000 }),
+    );
+    await user.click(screen.getByRole("button", { name: "Применить фильтры" }));
+
+    await waitFor(() => {
+      expect(router.state.location.search).toMatchObject({
+        loadCity: "Львов",
+        unloadCity: "Краков",
+        page: 1,
+      });
+    });
+    expect(await screen.findByText("Найдено: 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /SL-1007/ }),
+    ).toBeInTheDocument();
+
+    const requests = await Promise.all(bodies);
+    expect(requests.at(-1)).toEqual({
+      page: 1,
+      per_page: 10,
+      load_city: "Львов",
+      unload_city: "Краков",
+    });
+  });
+
   it("opens mobile filters as a labelled dialog and restores focus on close", async () => {
     const user = userEvent.setup();
     renderApp("/auctions");

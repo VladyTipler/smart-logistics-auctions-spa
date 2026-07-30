@@ -17,6 +17,8 @@ import {
   resetMockDatabase,
 } from "./mock-database";
 
+type AuctionListItem = NonNullable<AuctionListResponse["data"]>[number];
+
 const API_ORIGIN = "http://localhost";
 const ALLOWED_AUCTION_UUID = "11111111-1111-4111-8111-111111111111";
 const HIDDEN_HISTORY_UUID = "44444444-4444-4444-8444-444444444444";
@@ -184,33 +186,96 @@ describe("stateful auction mock backend", () => {
   });
 
   it.each([
-    ["cargo_num", { cargo_num: "SL-1001" }],
-    ["status", { status: ["NotParticipating"] }],
-    ["statuses", { statuses: [2] }],
-    ["auc_type", { auc_type: ["Down"] }],
-    ["load_city", { load_city: "Кишинёв" }],
-    ["unload_city", { unload_city: "Бухарест" }],
+    [
+      "cargo_num",
+      { cargo_num: "SL-1001" },
+      (auction) => auction.main?.cargo_num === "SL-1001",
+      true,
+    ],
+    [
+      "status",
+      { status: ["NotParticipating"] },
+      (auction) => auction.trading?.status_mobile === "NotParticipating",
+      false,
+    ],
+    [
+      "statuses",
+      { statuses: [2] },
+      (auction) => auction.trading?.status === "Auction",
+      false,
+    ],
+    [
+      "auc_type",
+      { auc_type: ["Down"] },
+      (auction) => auction.main?.auc_type === "Down",
+      false,
+    ],
+    [
+      "load_city",
+      { load_city: "Кишинёв" },
+      (auction) => auction.route?.load?.city === "Кишинёв",
+      true,
+    ],
+    [
+      "unload_city",
+      { unload_city: "Бухарест" },
+      (auction) => auction.route?.unload?.city === "Бухарест",
+      true,
+    ],
     [
       "load_date_from/to",
       {
         load_date_from: "2026-08-01T00:00:00+03:00",
         load_date_to: "2026-08-01T23:59:59+03:00",
       },
+      (auction) =>
+        auction.route?.load?.date === "2026-08-01T09:00:00+03:00",
+      true,
     ],
-    ["is_available", { is_available: true }],
-    ["is_bidder", { is_bidder: false }],
+    [
+      "is_available",
+      { is_available: true },
+      (auction) => auction.trading?.is_available === true,
+      false,
+    ],
+    [
+      "is_bidder",
+      { is_bidder: false },
+      (auction) => auction.trading?.is_bidder === false,
+      false,
+    ],
     [
       "current_price_from/to",
       { current_price_from: 31_500, current_price_to: 32_500 },
+      (auction) => {
+        const price = auction.trading?.price?.current;
+        return price !== undefined && price >= 31_500 && price <= 32_500;
+      },
+      true,
     ],
-  ] satisfies [string, AuctionListRequest][])(
+  ] satisfies [
+    string,
+    AuctionListRequest,
+    (auction: AuctionListItem) => boolean,
+    boolean,
+  ][])(
     "applies the %s filter",
-    async (_name, filter) => {
+    async (_name, filter, matches, isUnique) => {
       const response = await listAuctions({ ...filter, per_page: 100 });
+      const auctions = response.data ?? [];
 
-      expect(response.data).toHaveLength(1);
-      expect(response.data?.[0]?.main?.order_uid).toBe(ALLOWED_AUCTION_UUID);
-      expect(response.meta?.total).toBe(1);
+      expect(auctions.length).toBeGreaterThan(0);
+      expect(
+        auctions.some(
+          (auction) => auction.main?.order_uid === ALLOWED_AUCTION_UUID,
+        ),
+      ).toBe(true);
+      expect(auctions.every(matches)).toBe(true);
+      expect(response.meta?.total).toBe(auctions.length);
+
+      if (isUnique) {
+        expect(auctions).toHaveLength(1);
+      }
     },
   );
 
